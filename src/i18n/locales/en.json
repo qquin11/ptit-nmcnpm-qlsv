@@ -1,0 +1,178 @@
+{
+  "app": {
+    "name": "EduManage",
+    "subtitle": "School Management System"
+  },
+  "login": {
+    "title": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@school.edu",
+    "submit": "Sign In",
+    "submitting": "Signing in...",
+    "failed": "Login failed",
+    "noRole": "No role assigned. Contact administrator."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "teachers": "Teachers",
+    "courses": "Courses",
+    "classes": "Classes",
+    "semesters": "Semesters",
+    "schedules": "Schedules",
+    "feedback": "Feedback",
+    "myClasses": "My Classes",
+    "gradeInput": "Grade Input",
+    "materials": "Materials",
+    "myCourses": "My Courses",
+    "schedule": "Schedule",
+    "grades": "Grades",
+    "signOut": "Sign Out"
+  },
+  "role": {
+    "admin": "Administrator",
+    "teacher": "Teacher",
+    "student": "Student"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "totalStudents": "Total Students",
+      "totalTeachers": "Total Teachers",
+      "totalCourses": "Total Courses",
+      "activeClasses": "Active Classes"
+    },
+    "students": {
+      "title": "Manage Students",
+      "addStudent": "Add Student",
+      "name": "Full Name",
+      "code": "Student Code",
+      "department": "Department",
+      "phone": "Phone",
+      "dob": "Date of Birth",
+      "actions": "Actions"
+    },
+    "teachers": {
+      "title": "Manage Teachers",
+      "addTeacher": "Add Teacher",
+      "name": "Full Name",
+      "code": "Teacher Code",
+      "department": "Department",
+      "phone": "Phone",
+      "actions": "Actions"
+    },
+    "courses": {
+      "title": "Manage Courses",
+      "addCourse": "Add Course",
+      "name": "Course Name",
+      "code": "Course Code",
+      "credits": "Credits",
+      "department": "Department",
+      "actions": "Actions"
+    },
+    "classes": {
+      "title": "Manage Classes",
+      "addClass": "Add Class",
+      "name": "Class Name",
+      "course": "Course",
+      "teacher": "Teacher",
+      "semester": "Semester",
+      "maxStudents": "Max Students",
+      "actions": "Actions"
+    },
+    "semesters": {
+      "title": "Manage Semesters",
+      "addSemester": "Add Semester",
+      "name": "Semester Name",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "actions": "Actions"
+    },
+    "schedules": {
+      "title": "Manage Schedules",
+      "addSchedule": "Add Schedule",
+      "class": "Class",
+      "day": "Day",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "room": "Room",
+      "actions": "Actions"
+    },
+    "feedback": {
+      "title": "Student Feedback",
+      "student": "Student",
+      "message": "Message",
+      "status": "Status",
+      "date": "Date"
+    }
+  },
+  "teacher": {
+    "dashboard": {
+      "title": "Teacher Dashboard",
+      "myClasses": "My Classes",
+      "totalStudents": "Total Students"
+    },
+    "classes": {
+      "title": "My Classes",
+      "studentList": "Student List"
+    },
+    "grades": {
+      "title": "Grade Input",
+      "selectClass": "Select Class",
+      "midterm": "Midterm",
+      "final": "Final",
+      "total": "Total",
+      "save": "Save"
+    },
+    "materials": {
+      "title": "Course Materials",
+      "upload": "Upload Material",
+      "fileName": "Title",
+      "date": "Upload Date",
+      "actions": "Actions"
+    }
+  },
+  "student": {
+    "dashboard": {
+      "title": "Student Dashboard",
+      "enrolledCourses": "Enrolled Courses",
+      "gpa": "GPA"
+    },
+    "courses": {
+      "title": "My Courses",
+      "enroll": "Enroll",
+      "drop": "Drop"
+    },
+    "schedule": {
+      "title": "My Schedule"
+    },
+    "grades": {
+      "title": "My Grades",
+      "course": "Course",
+      "midterm": "Midterm",
+      "final": "Final",
+      "total": "Total"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "submit": "Submit Feedback",
+      "placeholder": "Write your feedback...",
+      "pending": "Pending",
+      "reviewed": "Reviewed"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "confirm": "Confirm",
+    "success": "Success",
+    "error": "Error"
+  }
+}

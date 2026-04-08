@@ -1,0 +1,178 @@
+{
+  "app": {
+    "name": "EduManage",
+    "subtitle": "Hệ thống Quản lý Trường học"
+  },
+  "login": {
+    "title": "Đăng nhập",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "emailPlaceholder": "you@school.edu",
+    "submit": "Đăng nhập",
+    "submitting": "Đang đăng nhập...",
+    "failed": "Đăng nhập thất bại",
+    "noRole": "Chưa được phân quyền. Liên hệ quản trị viên."
+  },
+  "nav": {
+    "dashboard": "Bảng điều khiển",
+    "students": "Sinh viên",
+    "teachers": "Giảng viên",
+    "courses": "Môn học",
+    "classes": "Lớp học",
+    "semesters": "Học kỳ",
+    "schedules": "Thời khóa biểu",
+    "feedback": "Phản hồi",
+    "myClasses": "Lớp của tôi",
+    "gradeInput": "Nhập điểm",
+    "materials": "Tài liệu",
+    "myCourses": "Môn học của tôi",
+    "schedule": "Lịch học",
+    "grades": "Điểm số",
+    "signOut": "Đăng xuất"
+  },
+  "role": {
+    "admin": "Quản trị viên",
+    "teacher": "Giảng viên",
+    "student": "Sinh viên"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Bảng điều khiển Quản trị",
+      "totalStudents": "Tổng Sinh viên",
+      "totalTeachers": "Tổng Giảng viên",
+      "totalCourses": "Tổng Môn học",
+      "activeClasses": "Lớp đang hoạt động"
+    },
+    "students": {
+      "title": "Quản lý Sinh viên",
+      "addStudent": "Thêm Sinh viên",
+      "name": "Họ tên",
+      "code": "Mã Sinh viên",
+      "department": "Khoa",
+      "phone": "Điện thoại",
+      "dob": "Ngày sinh",
+      "actions": "Thao tác"
+    },
+    "teachers": {
+      "title": "Quản lý Giảng viên",
+      "addTeacher": "Thêm Giảng viên",
+      "name": "Họ tên",
+      "code": "Mã Giảng viên",
+      "department": "Khoa",
+      "phone": "Điện thoại",
+      "actions": "Thao tác"
+    },
+    "courses": {
+      "title": "Quản lý Môn học",
+      "addCourse": "Thêm Môn học",
+      "name": "Tên Môn học",
+      "code": "Mã Môn học",
+      "credits": "Số tín chỉ",
+      "department": "Khoa",
+      "actions": "Thao tác"
+    },
+    "classes": {
+      "title": "Quản lý Lớp học",
+      "addClass": "Thêm Lớp học",
+      "name": "Tên Lớp",
+      "course": "Môn học",
+      "teacher": "Giảng viên",
+      "semester": "Học kỳ",
+      "maxStudents": "Sĩ số tối đa",
+      "actions": "Thao tác"
+    },
+    "semesters": {
+      "title": "Quản lý Học kỳ",
+      "addSemester": "Thêm Học kỳ",
+      "name": "Tên Học kỳ",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "actions": "Thao tác"
+    },
+    "schedules": {
+      "title": "Quản lý Thời khóa biểu",
+      "addSchedule": "Thêm Lịch",
+      "class": "Lớp",
+      "day": "Thứ",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "room": "Phòng",
+      "actions": "Thao tác"
+    },
+    "feedback": {
+      "title": "Phản hồi Sinh viên",
+      "student": "Sinh viên",
+      "message": "Nội dung",
+      "status": "Trạng thái",
+      "date": "Ngày"
+    }
+  },
+  "teacher": {
+    "dashboard": {
+      "title": "Bảng điều khiển Giảng viên",
+      "myClasses": "Lớp của tôi",
+      "totalStudents": "Tổng Sinh viên"
+    },
+    "classes": {
+      "title": "Lớp của tôi",
+      "studentList": "Danh sách Sinh viên"
+    },
+    "grades": {
+      "title": "Nhập điểm",
+      "selectClass": "Chọn Lớp",
+      "midterm": "Giữa kỳ",
+      "final": "Cuối kỳ",
+      "total": "Tổng",
+      "save": "Lưu"
+    },
+    "materials": {
+      "title": "Tài liệu Học tập",
+      "upload": "Tải lên Tài liệu",
+      "fileName": "Tiêu đề",
+      "date": "Ngày tải lên",
+      "actions": "Thao tác"
+    }
+  },
+  "student": {
+    "dashboard": {
+      "title": "Bảng điều khiển Sinh viên",
+      "enrolledCourses": "Môn đã đăng ký",
+      "gpa": "Điểm TB"
+    },
+    "courses": {
+      "title": "Môn học của tôi",
+      "enroll": "Đăng ký",
+      "drop": "Hủy đăng ký"
+    },
+    "schedule": {
+      "title": "Lịch học"
+    },
+    "grades": {
+      "title": "Điểm số",
+      "course": "Môn học",
+      "midterm": "Giữa kỳ",
+      "final": "Cuối kỳ",
+      "total": "Tổng"
+    },
+    "feedback": {
+      "title": "Phản hồi",
+      "submit": "Gửi Phản hồi",
+      "placeholder": "Viết phản hồi của bạn...",
+      "pending": "Chờ xử lý",
+      "reviewed": "Đã xem xét"
+    }
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "add": "Thêm",
+    "search": "Tìm kiếm",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "confirm": "Xác nhận",
+    "success": "Thành công",
+    "error": "Lỗi"
+  }
+}
