@@ -64,12 +64,12 @@ const TeacherGrades = () => {
     } else {
       await supabase.from('grades').insert({ enrollment_id: enrollmentId, midterm, final: final_val });
     }
-    toast({ title: 'Grade saved' });
+    toast({ title: 'Đã lưu điểm' });
   };
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Grade Input</h1>
+      <h1 className="dashboard-header">Nhập điểm</h1>
 
       <div className="flex flex-wrap gap-3">
         {classes.map((c) => (
@@ -88,10 +88,10 @@ const TeacherGrades = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Midterm</TableHead>
-                <TableHead>Final</TableHead>
-                <TableHead className="w-20">Save</TableHead>
+                <TableHead>Sinh viên</TableHead>
+                <TableHead>Giữa kỳ</TableHead>
+                <TableHead>Cuối kỳ</TableHead>
+                <TableHead className="w-20">Lưu</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,7 +124,7 @@ const TeacherGrades = () => {
                 </TableRow>
               ))}
               {enrollments.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No students</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Chưa có sinh viên</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

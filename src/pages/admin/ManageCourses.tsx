@@ -33,7 +33,7 @@ const ManageCourses = () => {
 
   const handleSave = async () => {
     if (!form.course_code.trim() || !form.course_name.trim()) {
-      toast({ variant: 'destructive', title: 'Validation', description: 'Code and name required' });
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã môn học và tên là bắt buộc' });
       return;
     }
     const payload = {
@@ -45,12 +45,12 @@ const ManageCourses = () => {
 
     if (editing) {
       const { error } = await supabase.from('courses').update(payload).eq('id', editing.id);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Course updated' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Cập nhật môn học thành công' });
     } else {
       const { error } = await supabase.from('courses').insert(payload);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Course created' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Thêm môn học thành công' });
     }
     setDialogOpen(false);
     resetForm();
@@ -58,26 +58,26 @@ const ManageCourses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this course?')) return;
+    if (!confirm('Xóa môn học này?')) return;
     await supabase.from('courses').delete().eq('id', id);
-    toast({ title: 'Course deleted' });
+    toast({ title: 'Đã xóa môn học' });
     fetchData();
   };
 
   return (
     <div className="page-container">
       <div className="flex items-center justify-between">
-        <h1 className="dashboard-header">Manage Courses</h1>
+        <h1 className="dashboard-header">Quản lý Môn học</h1>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Add Course</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Thêm Môn học</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? 'Edit Course' : 'Add Course'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? 'Sửa Môn học' : 'Thêm Môn học'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Course Code</Label><Input value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })} /></div>
-              <div><Label>Course Name</Label><Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} /></div>
-              <div><Label>Credits</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
-              <div><Label>Department</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'}</Button>
+              <div><Label>Mã Môn học</Label><Input value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })} /></div>
+              <div><Label>Tên Môn học</Label><Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} /></div>
+              <div><Label>Số tín chỉ</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
+              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -87,11 +87,11 @@ const ManageCourses = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Credits</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Mã MH</TableHead>
+              <TableHead>Tên Môn học</TableHead>
+              <TableHead>Tín chỉ</TableHead>
+              <TableHead>Khoa</TableHead>
+              <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,7 +110,7 @@ const ManageCourses = () => {
               </TableRow>
             ))}
             {courses.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No courses found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không có môn học nào</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

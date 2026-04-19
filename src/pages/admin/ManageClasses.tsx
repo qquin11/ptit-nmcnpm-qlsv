@@ -45,7 +45,7 @@ const ManageClasses = () => {
 
   const handleSave = async () => {
     if (!form.class_name.trim() || !form.course_id || !form.semester_id) {
-      toast({ variant: 'destructive', title: 'Validation', description: 'Name, course, and semester required' });
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Tên lớp, môn học và học kỳ là bắt buộc' });
       return;
     }
     const payload = {
@@ -58,12 +58,12 @@ const ManageClasses = () => {
 
     if (editing) {
       const { error } = await supabase.from('classes').update(payload).eq('id', editing.id);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Class updated' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Cập nhật lớp học thành công' });
     } else {
       const { error } = await supabase.from('classes').insert(payload);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Class created' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Thêm lớp học thành công' });
     }
     setDialogOpen(false);
     resetForm();
@@ -71,45 +71,45 @@ const ManageClasses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this class?')) return;
+    if (!confirm('Xóa lớp học này?')) return;
     await supabase.from('classes').delete().eq('id', id);
-    toast({ title: 'Class deleted' });
+    toast({ title: 'Đã xóa lớp học' });
     fetchData();
   };
 
   return (
     <div className="page-container">
       <div className="flex items-center justify-between">
-        <h1 className="dashboard-header">Manage Classes</h1>
+        <h1 className="dashboard-header">Quản lý Lớp học</h1>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Add Class</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Thêm Lớp học</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? 'Edit Class' : 'Add Class'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? 'Sửa Lớp học' : 'Thêm Lớp học'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Class Name</Label><Input value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
+              <div><Label>Tên Lớp</Label><Input value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
               <div>
-                <Label>Course</Label>
+                <Label>Môn học</Label>
                 <Select value={form.course_id} onValueChange={v => setForm({ ...form, course_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Chọn môn học" /></SelectTrigger>
                   <SelectContent>{courses.map(c => <SelectItem key={c.id} value={c.id}>{c.course_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Teacher</Label>
+                <Label>Giảng viên</Label>
                 <Select value={form.teacher_id} onValueChange={v => setForm({ ...form, teacher_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Chọn giảng viên" /></SelectTrigger>
                   <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Semester</Label>
+                <Label>Học kỳ</Label>
                 <Select value={form.semester_id} onValueChange={v => setForm({ ...form, semester_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select semester" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Chọn học kỳ" /></SelectTrigger>
                   <SelectContent>{semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Max Students</Label><Input type="number" value={form.max_students} onChange={e => setForm({ ...form, max_students: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'}</Button>
+              <div><Label>Sĩ số tối đa</Label><Input type="number" value={form.max_students} onChange={e => setForm({ ...form, max_students: e.target.value })} /></div>
+              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -119,12 +119,12 @@ const ManageClasses = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Class</TableHead>
-              <TableHead>Course</TableHead>
-              <TableHead>Teacher</TableHead>
-              <TableHead>Semester</TableHead>
-              <TableHead>Max</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Tên Lớp</TableHead>
+              <TableHead>Môn học</TableHead>
+              <TableHead>Giảng viên</TableHead>
+              <TableHead>Học kỳ</TableHead>
+              <TableHead>Sĩ số</TableHead>
+              <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,7 +144,7 @@ const ManageClasses = () => {
               </TableRow>
             ))}
             {classes.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No classes found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không có lớp học nào</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

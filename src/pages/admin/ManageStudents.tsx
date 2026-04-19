@@ -47,7 +47,7 @@ const ManageStudents = () => {
 
   const handleSave = async () => {
     if (!form.student_code.trim() || !form.full_name.trim()) {
-      toast({ variant: 'destructive', title: 'Validation', description: 'Code and name are required' });
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã sinh viên và họ tên là bắt buộc' });
       return;
     }
     if (editing) {
@@ -58,8 +58,8 @@ const ManageStudents = () => {
         department: form.department.trim() || null,
         phone: form.phone.trim() || null,
       }).eq('id', editing.id);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Student updated' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Cập nhật sinh viên thành công' });
     }
     setDialogOpen(false);
     resetForm();
@@ -67,10 +67,10 @@ const ManageStudents = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this student?')) return;
+    if (!confirm('Xóa sinh viên này?')) return;
     const { error } = await supabase.from('students').delete().eq('id', id);
-    if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-    toast({ title: 'Student deleted' });
+    if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+    toast({ title: 'Đã xóa sinh viên' });
     fetchStudents();
   };
 
@@ -82,28 +82,28 @@ const ManageStudents = () => {
   return (
     <div className="page-container">
       <div className="flex items-center justify-between">
-        <h1 className="dashboard-header">Manage Students</h1>
+        <h1 className="dashboard-header">Quản lý Sinh viên</h1>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button><Plus size={16} className="mr-2" />Add Student</Button>
+            <Button><Plus size={16} className="mr-2" />Thêm Sinh viên</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editing ? 'Edit Student' : 'Add Student'}</DialogTitle>
+              <DialogTitle>{editing ? 'Sửa Sinh viên' : 'Thêm Sinh viên'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               {!editing && (
                 <>
                   <div><Label>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Password</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <div><Label>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
                 </>
               )}
-              <div><Label>Student Code</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
-              <div><Label>Full Name</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
-              <div><Label>Date of Birth</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
-              <div><Label>Department</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
-              <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'}</Button>
+              <div><Label>Mã Sinh viên</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
+              <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div><Label>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
+              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -111,18 +111,18 @@ const ManageStudents = () => {
 
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search students..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Tìm sinh viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Mã SV</TableHead>
+              <TableHead>Họ tên</TableHead>
+              <TableHead>Khoa</TableHead>
+              <TableHead>Điện thoại</TableHead>
+              <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -141,7 +141,7 @@ const ManageStudents = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No students found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
