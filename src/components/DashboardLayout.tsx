@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, BookOpen, Calendar, GraduationCap,
   ClipboardList, LogOut, Menu,
-  Moon, Sun, School, Globe
+  Moon, Sun, School
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,7 +22,6 @@ const adminNav: NavItem[] = [
   { labelKey: 'nav.courses', path: '/admin/courses', icon: <BookOpen size={18} /> },
   { labelKey: 'nav.classes', path: '/admin/classes', icon: <School size={18} /> },
   { labelKey: 'nav.semesters', path: '/admin/semesters', icon: <Calendar size={18} /> },
-  { labelKey: 'nav.schedules', path: '/admin/schedules', icon: <ClipboardList size={18} /> },
 ];
 
 const teacherNav: NavItem[] = [
@@ -33,7 +32,6 @@ const teacherNav: NavItem[] = [
 
 const studentNav: NavItem[] = [
   { labelKey: 'nav.dashboard', path: '/student', icon: <LayoutDashboard size={18} /> },
-  { labelKey: 'nav.schedule', path: '/student/schedule', icon: <Calendar size={18} /> },
   { labelKey: 'nav.grades', path: '/student/grades', icon: <ClipboardList size={18} /> },
 ];
 
@@ -41,7 +39,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   const { role, user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
 
@@ -51,10 +49,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   const toggleDark = () => {
     document.documentElement.classList.toggle('dark');
     setDark(!dark);
-  };
-
-  const toggleLang = () => {
-    i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi');
   };
 
   const handleSignOut = async () => {
@@ -116,9 +110,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           </button>
           <div className="hidden md:block" />
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleLang} title={i18n.language === 'vi' ? 'English' : 'Tiếng Việt'}>
-              <Globe size={18} />
-            </Button>
             <Button variant="ghost" size="icon" onClick={toggleDark}>
               {dark ? <Sun size={18} /> : <Moon size={18} />}
             </Button>

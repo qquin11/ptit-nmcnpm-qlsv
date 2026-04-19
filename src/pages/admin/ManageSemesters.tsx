@@ -33,16 +33,16 @@ const ManageSemesters = () => {
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.start_date || !form.end_date) {
-      toast({ variant: 'destructive', title: 'All fields required' });
+      toast({ variant: 'destructive', title: 'Vui lòng điền đầy đủ thông tin' });
       return;
     }
     const payload = { name: form.name.trim(), start_date: form.start_date, end_date: form.end_date };
     if (editing) {
       await supabase.from('semesters').update(payload).eq('id', editing.id);
-      toast({ title: 'Semester updated' });
+      toast({ title: 'Cập nhật học kỳ thành công' });
     } else {
       await supabase.from('semesters').insert(payload);
-      toast({ title: 'Semester created' });
+      toast({ title: 'Thêm học kỳ thành công' });
     }
     setDialogOpen(false);
     resetForm();
@@ -50,25 +50,25 @@ const ManageSemesters = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete?')) return;
+    if (!confirm('Xóa học kỳ này?')) return;
     await supabase.from('semesters').delete().eq('id', id);
-    toast({ title: 'Deleted' });
+    toast({ title: 'Đã xóa học kỳ' });
     fetchData();
   };
 
   return (
     <div className="page-container">
       <div className="flex items-center justify-between">
-        <h1 className="dashboard-header">Manage Semesters</h1>
+        <h1 className="dashboard-header">Quản lý Học kỳ</h1>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Add Semester</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Thêm Học kỳ</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? 'Edit' : 'Add'} Semester</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? 'Sửa' : 'Thêm'} Học kỳ</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Fall 2026" /></div>
-              <div><Label>Start Date</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div><Label>End Date</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'}</Button>
+              <div><Label>Tên Học kỳ</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="HK1 2025-2026" /></div>
+              <div><Label>Ngày bắt đầu</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
+              <div><Label>Ngày kết thúc</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
+              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -77,10 +77,10 @@ const ManageSemesters = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Start</TableHead>
-              <TableHead>End</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Tên Học kỳ</TableHead>
+              <TableHead>Ngày bắt đầu</TableHead>
+              <TableHead>Ngày kết thúc</TableHead>
+              <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -98,7 +98,7 @@ const ManageSemesters = () => {
               </TableRow>
             ))}
             {semesters.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No semesters</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không có học kỳ nào</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

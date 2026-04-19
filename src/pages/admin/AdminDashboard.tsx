@@ -42,8 +42,8 @@ const AdminDashboard = () => {
       if (grades && grades.length > 0) {
         const avg = grades.reduce((sum, g) => sum + (Number(g.total) || 0), 0) / grades.length;
         setGradeData([
-          { name: 'Average', avg: Math.round(avg * 100) / 100 },
-          { name: 'Max Possible', avg: 100 },
+          { name: 'Điểm trung bình', avg: Math.round(avg * 100) / 100 },
+          { name: 'Điểm tối đa', avg: 100 },
         ]);
       }
     };
@@ -51,15 +51,15 @@ const AdminDashboard = () => {
   }, []);
 
   const statCards = [
-    { label: 'Total Students', value: stats.students, icon: <GraduationCap size={24} />, color: 'text-primary' },
-    { label: 'Total Teachers', value: stats.teachers, icon: <Users size={24} />, color: 'text-accent' },
-    { label: 'Total Courses', value: stats.courses, icon: <BookOpen size={24} />, color: 'text-warning' },
-    { label: 'Total Classes', value: stats.classes, icon: <School size={24} />, color: 'text-info' },
+    { label: 'Tổng Sinh viên', value: stats.students, icon: <GraduationCap size={24} />, color: 'text-primary' },
+    { label: 'Tổng Giảng viên', value: stats.teachers, icon: <Users size={24} />, color: 'text-accent' },
+    { label: 'Tổng Môn học', value: stats.courses, icon: <BookOpen size={24} />, color: 'text-warning' },
+    { label: 'Tổng Lớp học', value: stats.classes, icon: <School size={24} />, color: 'text-info' },
   ];
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Admin Dashboard</h1>
+      <h1 className="dashboard-header">Bảng điều khiển Quản trị</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((s) => (
@@ -77,7 +77,7 @@ const AdminDashboard = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-base">Students by Department</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Sinh viên theo Khoa</CardTitle></CardHeader>
           <CardContent>
             {deptData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -91,13 +91,13 @@ const AdminDashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-muted-foreground py-8 text-center">No student data yet</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">Chưa có dữ liệu sinh viên</p>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Grade Statistics</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Thống kê Điểm số</CardTitle></CardHeader>
           <CardContent>
             {gradeData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-muted-foreground py-8 text-center">No grade data yet</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">Chưa có dữ liệu điểm</p>
             )}
           </CardContent>
         </Card>

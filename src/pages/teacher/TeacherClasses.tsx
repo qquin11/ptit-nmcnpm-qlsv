@@ -35,7 +35,7 @@ const TeacherClasses = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">My Classes & Students</h1>
+      <h1 className="dashboard-header">Lớp của tôi & Sinh viên</h1>
 
       <div className="flex flex-wrap gap-3">
         {classes.map((c) => (
@@ -54,10 +54,10 @@ const TeacherClasses = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Mã SV</TableHead>
+                <TableHead>Họ tên</TableHead>
+                <TableHead>Khoa</TableHead>
+                <TableHead>Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -70,7 +70,7 @@ const TeacherClasses = () => {
                 </TableRow>
               ))}
               {students.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No students enrolled</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Chưa có sinh viên trong lớp</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

@@ -24,16 +24,16 @@ const StudentGrades = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">My Grades</h1>
+      <h1 className="dashboard-header">Điểm số của tôi</h1>
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Course</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Midterm</TableHead>
-              <TableHead>Final</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead>Môn học</TableHead>
+              <TableHead>Lớp</TableHead>
+              <TableHead>Giữa kỳ</TableHead>
+              <TableHead>Cuối kỳ</TableHead>
+              <TableHead>Tổng</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -50,7 +50,7 @@ const StudentGrades = () => {
               );
             })}
             {grades.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No grades available</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Chưa có điểm</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
