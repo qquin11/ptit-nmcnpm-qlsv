@@ -18,20 +18,16 @@ import ManageCourses from "./pages/admin/ManageCourses";
 import ManageClasses from "./pages/admin/ManageClasses";
 import ManageSemesters from "./pages/admin/ManageSemesters";
 import ManageSchedules from "./pages/admin/ManageSchedules";
-import AdminFeedback from "./pages/admin/AdminFeedback";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import TeacherGrades from "./pages/teacher/TeacherGrades";
-import TeacherMaterials from "./pages/teacher/TeacherMaterials";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
-import StudentCourses from "./pages/student/StudentCourses";
 import StudentSchedule from "./pages/student/StudentSchedule";
 import StudentGrades from "./pages/student/StudentGrades";
-import StudentFeedback from "./pages/student/StudentFeedback";
 
 const queryClient = new QueryClient();
 
@@ -92,20 +88,16 @@ const App = () => (
             <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><ManageClasses /></ProtectedRoute>} />
             <Route path="/admin/semesters" element={<ProtectedRoute allowedRoles={['admin']}><ManageSemesters /></ProtectedRoute>} />
             <Route path="/admin/schedules" element={<ProtectedRoute allowedRoles={['admin']}><ManageSchedules /></ProtectedRoute>} />
-            <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['admin']}><AdminFeedback /></ProtectedRoute>} />
 
             {/* Teacher Routes */}
             <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
             <Route path="/teacher/classes" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherClasses /></ProtectedRoute>} />
             <Route path="/teacher/grades" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherGrades /></ProtectedRoute>} />
-            <Route path="/teacher/materials" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherMaterials /></ProtectedRoute>} />
 
             {/* Student Routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
-            <Route path="/student/courses" element={<ProtectedRoute allowedRoles={['student']}><StudentCourses /></ProtectedRoute>} />
             <Route path="/student/schedule" element={<ProtectedRoute allowedRoles={['student']}><StudentSchedule /></ProtectedRoute>} />
             <Route path="/student/grades" element={<ProtectedRoute allowedRoles={['student']}><StudentGrades /></ProtectedRoute>} />
-            <Route path="/student/feedback" element={<ProtectedRoute allowedRoles={['student']}><StudentFeedback /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
