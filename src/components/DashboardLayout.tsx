@@ -4,8 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, BookOpen, Calendar, GraduationCap,
-  ClipboardList, FileText, MessageSquare, LogOut, Menu,
-  Bell, Moon, Sun, School, Globe
+  ClipboardList, LogOut, Menu,
+  Moon, Sun, School, Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -23,22 +23,18 @@ const adminNav: NavItem[] = [
   { labelKey: 'nav.classes', path: '/admin/classes', icon: <School size={18} /> },
   { labelKey: 'nav.semesters', path: '/admin/semesters', icon: <Calendar size={18} /> },
   { labelKey: 'nav.schedules', path: '/admin/schedules', icon: <ClipboardList size={18} /> },
-  { labelKey: 'nav.feedback', path: '/admin/feedback', icon: <MessageSquare size={18} /> },
 ];
 
 const teacherNav: NavItem[] = [
   { labelKey: 'nav.dashboard', path: '/teacher', icon: <LayoutDashboard size={18} /> },
   { labelKey: 'nav.myClasses', path: '/teacher/classes', icon: <School size={18} /> },
   { labelKey: 'nav.gradeInput', path: '/teacher/grades', icon: <ClipboardList size={18} /> },
-  { labelKey: 'nav.materials', path: '/teacher/materials', icon: <FileText size={18} /> },
 ];
 
 const studentNav: NavItem[] = [
   { labelKey: 'nav.dashboard', path: '/student', icon: <LayoutDashboard size={18} /> },
-  { labelKey: 'nav.myCourses', path: '/student/courses', icon: <BookOpen size={18} /> },
   { labelKey: 'nav.schedule', path: '/student/schedule', icon: <Calendar size={18} /> },
   { labelKey: 'nav.grades', path: '/student/grades', icon: <ClipboardList size={18} /> },
-  { labelKey: 'nav.feedback', path: '/student/feedback', icon: <MessageSquare size={18} /> },
 ];
 
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
@@ -125,9 +121,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             </Button>
             <Button variant="ghost" size="icon" onClick={toggleDark}>
               {dark ? <Sun size={18} /> : <Moon size={18} />}
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell size={18} />
             </Button>
           </div>
         </header>
