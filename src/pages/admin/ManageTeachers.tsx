@@ -43,7 +43,7 @@ const ManageTeachers = () => {
 
   const handleSave = async () => {
     if (!form.teacher_code.trim() || !form.full_name.trim()) {
-      toast({ variant: 'destructive', title: 'Validation', description: 'Code and name required' });
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã giảng viên và họ tên là bắt buộc' });
       return;
     }
     if (editing) {
@@ -53,8 +53,8 @@ const ManageTeachers = () => {
         department: form.department.trim() || null,
         phone: form.phone.trim() || null,
       }).eq('id', editing.id);
-      if (error) { toast({ variant: 'destructive', title: 'Error', description: error.message }); return; }
-      toast({ title: 'Teacher updated' });
+      if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
+      toast({ title: 'Cập nhật giảng viên thành công' });
     }
     setDialogOpen(false);
     resetForm();
@@ -62,9 +62,9 @@ const ManageTeachers = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this teacher?')) return;
+    if (!confirm('Xóa giảng viên này?')) return;
     await supabase.from('teachers').delete().eq('id', id);
-    toast({ title: 'Teacher deleted' });
+    toast({ title: 'Đã xóa giảng viên' });
     fetch();
   };
 
@@ -75,17 +75,17 @@ const ManageTeachers = () => {
   return (
     <div className="page-container">
       <div className="flex items-center justify-between">
-        <h1 className="dashboard-header">Manage Teachers</h1>
+        <h1 className="dashboard-header">Quản lý Giảng viên</h1>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
-          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Add Teacher</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus size={16} className="mr-2" />Thêm Giảng viên</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? 'Edit Teacher' : 'Add Teacher'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? 'Sửa Giảng viên' : 'Thêm Giảng viên'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Teacher Code</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
-              <div><Label>Full Name</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
-              <div><Label>Department</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
-              <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'}</Button>
+              <div><Label>Mã Giảng viên</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
+              <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -93,18 +93,18 @@ const ManageTeachers = () => {
 
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search teachers..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Tìm giảng viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Mã GV</TableHead>
+              <TableHead>Họ tên</TableHead>
+              <TableHead>Khoa</TableHead>
+              <TableHead>Điện thoại</TableHead>
+              <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -123,7 +123,7 @@ const ManageTeachers = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No teachers found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không tìm thấy giảng viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

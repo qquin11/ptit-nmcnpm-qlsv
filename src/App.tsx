@@ -17,7 +17,6 @@ import ManageTeachers from "./pages/admin/ManageTeachers";
 import ManageCourses from "./pages/admin/ManageCourses";
 import ManageClasses from "./pages/admin/ManageClasses";
 import ManageSemesters from "./pages/admin/ManageSemesters";
-import ManageSchedules from "./pages/admin/ManageSchedules";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -26,7 +25,6 @@ import TeacherGrades from "./pages/teacher/TeacherGrades";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
-import StudentSchedule from "./pages/student/StudentSchedule";
 import StudentGrades from "./pages/student/StudentGrades";
 
 const queryClient = new QueryClient();
@@ -87,7 +85,6 @@ const App = () => (
             <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin']}><ManageCourses /></ProtectedRoute>} />
             <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><ManageClasses /></ProtectedRoute>} />
             <Route path="/admin/semesters" element={<ProtectedRoute allowedRoles={['admin']}><ManageSemesters /></ProtectedRoute>} />
-            <Route path="/admin/schedules" element={<ProtectedRoute allowedRoles={['admin']}><ManageSchedules /></ProtectedRoute>} />
 
             {/* Teacher Routes */}
             <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
@@ -96,7 +93,6 @@ const App = () => (
 
             {/* Student Routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
-            <Route path="/student/schedule" element={<ProtectedRoute allowedRoles={['student']}><StudentSchedule /></ProtectedRoute>} />
             <Route path="/student/grades" element={<ProtectedRoute allowedRoles={['student']}><StudentGrades /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />

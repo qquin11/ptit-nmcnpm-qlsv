@@ -18,18 +18,18 @@ const StudentDashboard = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Student Dashboard</h1>
+      <h1 className="dashboard-header">Bảng điều khiển</h1>
 
       {profile && (
         <Card>
-          <CardHeader><CardTitle className="text-base">My Profile</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Thông tin cá nhân</CardTitle></CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div><p className="text-sm text-muted-foreground">Name</p><p className="font-medium">{profile.full_name}</p></div>
-              <div><p className="text-sm text-muted-foreground">Student Code</p><p className="font-mono">{profile.student_code}</p></div>
-              <div><p className="text-sm text-muted-foreground">Department</p><p>{profile.department || '—'}</p></div>
-              <div><p className="text-sm text-muted-foreground">Date of Birth</p><p>{profile.dob || '—'}</p></div>
-              <div><p className="text-sm text-muted-foreground">Phone</p><p>{profile.phone || '—'}</p></div>
+              <div><p className="text-sm text-muted-foreground">Họ tên</p><p className="font-medium">{profile.full_name}</p></div>
+              <div><p className="text-sm text-muted-foreground">Mã sinh viên</p><p className="font-mono">{profile.student_code}</p></div>
+              <div><p className="text-sm text-muted-foreground">Khoa</p><p>{profile.department || '—'}</p></div>
+              <div><p className="text-sm text-muted-foreground">Ngày sinh</p><p>{profile.dob || '—'}</p></div>
+              <div><p className="text-sm text-muted-foreground">Điện thoại</p><p>{profile.phone || '—'}</p></div>
               <div><p className="text-sm text-muted-foreground">Email</p><p>{user?.email}</p></div>
             </div>
           </CardContent>

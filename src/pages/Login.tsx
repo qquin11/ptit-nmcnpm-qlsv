@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Globe } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -16,11 +16,7 @@ const Login = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
-
-  const toggleLang = () => {
-    i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi');
-  };
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +33,6 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="absolute top-4 right-4">
-        <Button variant="ghost" size="sm" onClick={toggleLang} className="gap-1">
-          <Globe size={16} />
-          {i18n.language === 'vi' ? 'EN' : 'VI'}
-        </Button>
-      </div>
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
