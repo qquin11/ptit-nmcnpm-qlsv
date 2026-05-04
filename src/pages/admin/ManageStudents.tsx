@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 
@@ -16,32 +18,39 @@ interface Student {
   dob: string | null;
   department: string | null;
   phone: string | null;
+  class_id: string | null;
+  classes?: { class_name: string } | null;
   user_id: string;
 }
 
 const ManageStudents = () => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
-  const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', email: '', password: '' });
+  const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '' });
   const { toast } = useToast();
 
   const fetchStudents = async () => {
-    const { data } = await supabase.from('students').select('*').order('created_at', { ascending: false });
-    if (data) setStudents(data);
+    const [st, cl] = await Promise.all([
+      supabase.from('students').select('*, classes(class_name)').order('created_at', { ascending: false }),
+      supabase.from('classes').select('id, class_name'),
+    ]);
+    if (st.data) setStudents(st.data as any);
+    if (cl.data) setClasses(cl.data);
   };
 
   useEffect(() => { fetchStudents(); }, []);
 
   const resetForm = () => {
-    setForm({ student_code: '', full_name: '', dob: '', department: '', phone: '', email: '', password: '' });
+    setForm({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '' });
     setEditing(null);
   };
 
   const handleEdit = (s: Student) => {
     setEditing(s);
-    setForm({ student_code: s.student_code, full_name: s.full_name, dob: s.dob || '', department: s.department || '', phone: s.phone || '', email: '', password: '' });
+    setForm({ student_code: s.student_code, full_name: s.full_name, dob: s.dob || '', department: s.department || '', phone: s.phone || '', class_id: s.class_id || '', email: '', password: '' });
     setDialogOpen(true);
   };
 
@@ -50,6 +59,7 @@ const ManageStudents = () => {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã sinh viên và họ tên là bắt buộc' });
       return;
     }
+
     if (editing) {
       const { error } = await supabase.from('students').update({
         student_code: form.student_code.trim(),
@@ -57,14 +67,55 @@ const ManageStudents = () => {
         dob: form.dob || null,
         department: form.department.trim() || null,
         phone: form.phone.trim() || null,
+        class_id: form.class_id || null,
       }).eq('id', editing.id);
       if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
       toast({ title: 'Cập nhật sinh viên thành công' });
+    } else {
+      if (!form.email.trim() || !form.password.trim()) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
+        return;
+      }
+      // Use a temporary client (no session persistence) so admin stays logged in
+      const tempClient = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        { auth: { persistSession: false, autoRefreshToken: false } }
+      );
+      const { data: authData, error: authError } = await tempClient.auth.signUp({
+        email: form.email.trim(),
+        password: form.password.trim(),
+      });
+      if (authError || !authData.user) {
+        toast({ variant: 'destructive', title: 'Lỗi tạo tài khoản', description: authError?.message || 'Không tạo được tài khoản' });
+        return;
+      }
+      const userId = authData.user.id;
+      const [studentRes, roleRes] = await Promise.all([
+        supabase.from('students').insert({
+          user_id: userId,
+          student_code: form.student_code.trim(),
+          full_name: form.full_name.trim(),
+          dob: form.dob || null,
+          department: form.department.trim() || null,
+          phone: form.phone.trim() || null,
+          class_id: form.class_id || null,
+        }),
+        supabase.from('user_roles').insert({ user_id: userId, role: 'student' }),
+      ]);
+      if (studentRes.error || roleRes.error) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: studentRes.error?.message || roleRes.error?.message });
+        return;
+      }
+      toast({ title: 'Thêm sinh viên thành công' });
     }
+
     setDialogOpen(false);
     resetForm();
     fetchStudents();
   };
+
+  const className = (s: Student) => s.classes?.class_name || '—';
 
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa sinh viên này?')) return;
@@ -102,6 +153,13 @@ const ManageStudents = () => {
               <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
               <div><Label>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
               <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div>
+                <Label>Lớp</Label>
+                <Select value={form.class_id} onValueChange={v => setForm({ ...form, class_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
+                  <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
               <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
               <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
@@ -120,6 +178,7 @@ const ManageStudents = () => {
             <TableRow>
               <TableHead>Mã SV</TableHead>
               <TableHead>Họ tên</TableHead>
+              <TableHead>Lớp</TableHead>
               <TableHead>Khoa</TableHead>
               <TableHead>Điện thoại</TableHead>
               <TableHead className="w-24">Thao tác</TableHead>
@@ -130,6 +189,7 @@ const ManageStudents = () => {
               <TableRow key={s.id}>
                 <TableCell className="font-mono text-sm">{s.student_code}</TableCell>
                 <TableCell className="font-medium">{s.full_name}</TableCell>
+                <TableCell>{className(s)}</TableCell>
                 <TableCell>{s.department || '—'}</TableCell>
                 <TableCell>{s.phone || '—'}</TableCell>
                 <TableCell>
@@ -141,7 +201,7 @@ const ManageStudents = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

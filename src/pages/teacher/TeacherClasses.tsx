@@ -6,71 +6,73 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const TeacherClasses = () => {
   const { user } = useAuth();
-  const [classes, setClasses] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [students, setStudents] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    const fetchClasses = async () => {
+    const fetchCourses = async () => {
       const { data: teacher } = await supabase.from('teachers').select('id').eq('user_id', user.id).maybeSingle();
       if (!teacher) return;
-      const { data } = await supabase.from('classes').select('*, courses(course_name)').eq('teacher_id', teacher.id);
-      if (data) setClasses(data);
+      const { data } = await supabase.from('courses').select('*').eq('teacher_id', teacher.id);
+      if (data) setCourses(data);
     };
-    fetchClasses();
+    fetchCourses();
   }, [user]);
 
   useEffect(() => {
-    if (!selectedClass) return;
+    if (!selectedCourse) return;
     const fetchStudents = async () => {
       const { data } = await supabase
-        .from('enrollments')
-        .select('*, students(full_name, student_code, department)')
-        .eq('class_id', selectedClass);
+        .from('grades')
+        .select('id, semester_id, students(full_name, student_code, department, classes(class_name)), semesters(name)')
+        .eq('course_id', selectedCourse);
       if (data) setStudents(data);
     };
     fetchStudents();
-  }, [selectedClass]);
+  }, [selectedCourse]);
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Lớp của tôi & Sinh viên</h1>
+      <h1 className="dashboard-header">Môn học của tôi & Sinh viên</h1>
 
       <div className="flex flex-wrap gap-3">
-        {classes.map((c) => (
+        {courses.map((c) => (
           <button
             key={c.id}
-            onClick={() => setSelectedClass(c.id)}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${selectedClass === c.id ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'}`}
+            onClick={() => setSelectedCourse(c.id)}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${selectedCourse === c.id ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'}`}
           >
-            {c.class_name}
+            {c.course_name}
           </button>
         ))}
       </div>
 
-      {selectedClass && (
+      {selectedCourse && (
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Mã SV</TableHead>
                 <TableHead>Họ tên</TableHead>
+                <TableHead>Lớp</TableHead>
                 <TableHead>Khoa</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>Học kỳ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-mono text-sm">{(e.students as any)?.student_code}</TableCell>
-                  <TableCell className="font-medium">{(e.students as any)?.full_name}</TableCell>
-                  <TableCell>{(e.students as any)?.department || '—'}</TableCell>
-                  <TableCell>{e.status}</TableCell>
+              {students.map((g) => (
+                <TableRow key={g.id}>
+                  <TableCell className="font-mono text-sm">{(g.students as any)?.student_code}</TableCell>
+                  <TableCell className="font-medium">{(g.students as any)?.full_name}</TableCell>
+                  <TableCell>{(g.students as any)?.classes?.class_name || '—'}</TableCell>
+                  <TableCell>{(g.students as any)?.department || '—'}</TableCell>
+                  <TableCell>{(g.semesters as any)?.name || '—'}</TableCell>
                 </TableRow>
               ))}
               {students.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Chưa có sinh viên trong lớp</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Chưa có sinh viên đăng ký</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

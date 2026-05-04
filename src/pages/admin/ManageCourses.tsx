@@ -6,28 +6,34 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ course_code: '', course_name: '', credits: '3', department: '' });
+  const [form, setForm] = useState({ course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' });
   const { toast } = useToast();
 
   const fetchData = async () => {
-    const { data } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
-    if (data) setCourses(data);
+    const [co, te] = await Promise.all([
+      supabase.from('courses').select('*, teachers(full_name)').order('created_at', { ascending: false }),
+      supabase.from('teachers').select('id, full_name'),
+    ]);
+    if (co.data) setCourses(co.data);
+    if (te.data) setTeachers(te.data);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const resetForm = () => { setForm({ course_code: '', course_name: '', credits: '3', department: '' }); setEditing(null); };
+  const resetForm = () => { setForm({ course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' }); setEditing(null); };
 
   const handleEdit = (c: any) => {
     setEditing(c);
-    setForm({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '' });
+    setForm({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '', teacher_id: c.teacher_id || '' });
     setDialogOpen(true);
   };
 
@@ -41,6 +47,7 @@ const ManageCourses = () => {
       course_name: form.course_name.trim(),
       credits: parseInt(form.credits) || 3,
       department: form.department.trim() || null,
+      teacher_id: form.teacher_id || null,
     };
 
     if (editing) {
@@ -77,6 +84,13 @@ const ManageCourses = () => {
               <div><Label>Tên Môn học</Label><Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} /></div>
               <div><Label>Số tín chỉ</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
               <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div>
+                <Label>Giảng viên</Label>
+                <Select value={form.teacher_id} onValueChange={v => setForm({ ...form, teacher_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Chọn giảng viên" /></SelectTrigger>
+                  <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
               <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
@@ -91,6 +105,7 @@ const ManageCourses = () => {
               <TableHead>Tên Môn học</TableHead>
               <TableHead>Tín chỉ</TableHead>
               <TableHead>Khoa</TableHead>
+              <TableHead>Giảng viên</TableHead>
               <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
@@ -101,6 +116,7 @@ const ManageCourses = () => {
                 <TableCell className="font-medium">{c.course_name}</TableCell>
                 <TableCell>{c.credits}</TableCell>
                 <TableCell>{c.department || '—'}</TableCell>
+                <TableCell>{(c.teachers as any)?.full_name || '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil size={14} /></Button>
@@ -110,7 +126,7 @@ const ManageCourses = () => {
               </TableRow>
             ))}
             {courses.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không có môn học nào</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không có môn học nào</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

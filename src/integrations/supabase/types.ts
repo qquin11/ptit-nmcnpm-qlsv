@@ -1,588 +1,82 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+// Hand-written to match supabase/migrations/20260504000000_init.sql.
+// Regenerate after schema changes:
+//   npx supabase gen types typescript --project-id <your-project-id> > src/integrations/supabase/types.ts
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+type Timestamps = { created_at: string };
+type WithUpdated = Timestamps & { updated_at: string };
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.4"
-  }
   public: {
     Tables: {
-      classes: {
-        Row: {
-          class_name: string
-          course_id: string
-          created_at: string
-          id: string
-          max_students: number
-          semester_id: string
-          teacher_id: string | null
-        }
-        Insert: {
-          class_name: string
-          course_id: string
-          created_at?: string
-          id?: string
-          max_students?: number
-          semester_id: string
-          teacher_id?: string | null
-        }
-        Update: {
-          class_name?: string
-          course_id?: string
-          created_at?: string
-          id?: string
-          max_students?: number
-          semester_id?: string
-          teacher_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "classes_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "classes_semester_id_fkey"
-            columns: ["semester_id"]
-            isOneToOne: false
-            referencedRelation: "semesters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "classes_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      courses: {
-        Row: {
-          course_code: string
-          course_name: string
-          created_at: string
-          credits: number
-          department: string | null
-          id: string
-        }
-        Insert: {
-          course_code: string
-          course_name: string
-          created_at?: string
-          credits?: number
-          department?: string | null
-          id?: string
-        }
-        Update: {
-          course_code?: string
-          course_name?: string
-          created_at?: string
-          credits?: number
-          department?: string | null
-          id?: string
-        }
-        Relationships: []
-      }
-      enrollments: {
-        Row: {
-          class_id: string
-          created_at: string
-          id: string
-          status: string
-          student_id: string
-        }
-        Insert: {
-          class_id: string
-          created_at?: string
-          id?: string
-          status?: string
-          student_id: string
-        }
-        Update: {
-          class_id?: string
-          created_at?: string
-          id?: string
-          status?: string
-          student_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "enrollments_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enrollments_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      feedback: {
-        Row: {
-          created_at: string
-          id: string
-          message: string
-          status: string
-          student_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message: string
-          status?: string
-          student_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string
-          status?: string
-          student_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      grades: {
-        Row: {
-          created_at: string
-          enrollment_id: string
-          final: number | null
-          id: string
-          midterm: number | null
-          total: number | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          enrollment_id: string
-          final?: number | null
-          id?: string
-          midterm?: number | null
-          total?: number | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          enrollment_id?: string
-          final?: number | null
-          id?: string
-          midterm?: number | null
-          total?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "grades_enrollment_id_fkey"
-            columns: ["enrollment_id"]
-            isOneToOne: true
-            referencedRelation: "enrollments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      materials: {
-        Row: {
-          class_id: string
-          file_url: string | null
-          id: string
-          title: string
-          upload_date: string
-        }
-        Insert: {
-          class_id: string
-          file_url?: string | null
-          id?: string
-          title: string
-          upload_date?: string
-        }
-        Update: {
-          class_id?: string
-          file_url?: string | null
-          id?: string
-          title?: string
-          upload_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "materials_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          created_at: string
-          id: string
-          message: string
-          read: boolean
-          title: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message: string
-          read?: boolean
-          title: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string
-          read?: boolean
-          title?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      schedules: {
-        Row: {
-          class_id: string
-          created_at: string
-          day_of_week: string
-          end_time: string
-          id: string
-          room: string | null
-          start_time: string
-        }
-        Insert: {
-          class_id: string
-          created_at?: string
-          day_of_week: string
-          end_time: string
-          id?: string
-          room?: string | null
-          start_time: string
-        }
-        Update: {
-          class_id?: string
-          created_at?: string
-          day_of_week?: string
-          end_time?: string
-          id?: string
-          room?: string | null
-          start_time?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "schedules_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      semesters: {
-        Row: {
-          created_at: string
-          end_date: string
-          id: string
-          name: string
-          start_date: string
-        }
-        Insert: {
-          created_at?: string
-          end_date: string
-          id?: string
-          name: string
-          start_date: string
-        }
-        Update: {
-          created_at?: string
-          end_date?: string
-          id?: string
-          name?: string
-          start_date?: string
-        }
-        Relationships: []
-      }
-      students: {
-        Row: {
-          created_at: string
-          department: string | null
-          dob: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          student_code: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          department?: string | null
-          dob?: string | null
-          full_name: string
-          id?: string
-          phone?: string | null
-          student_code: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          department?: string | null
-          dob?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          student_code?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      teachers: {
-        Row: {
-          created_at: string
-          department: string | null
-          full_name: string
-          id: string
-          phone: string | null
-          teacher_code: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          department?: string | null
-          full_name: string
-          id?: string
-          phone?: string | null
-          teacher_code: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          department?: string | null
-          full_name?: string
-          id?: string
-          phone?: string | null
-          teacher_code?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
+        Row: { id: string; user_id: string; role: 'admin' | 'teacher' | 'student' } & Timestamps;
+        Insert: { id?: string; user_id: string; role: 'admin' | 'teacher' | 'student'; created_at?: string };
+        Update: Partial<{ id: string; user_id: string; role: 'admin' | 'teacher' | 'student'; created_at: string }>;
+        Relationships: [];
+      };
+      profiles: {
+        Row: { id: string; user_id: string; full_name: string; email: string | null; phone: string | null; avatar_url: string | null } & WithUpdated;
+        Insert: { id?: string; user_id: string; full_name?: string; email?: string | null; phone?: string | null; avatar_url?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+        Relationships: [];
+      };
+      teachers: {
+        Row: { id: string; user_id: string; teacher_code: string; full_name: string; department: string | null; phone: string | null } & Timestamps;
+        Insert: { id?: string; user_id: string; teacher_code: string; full_name: string; department?: string | null; phone?: string | null; created_at?: string };
+        Update: Partial<Database['public']['Tables']['teachers']['Insert']>;
+        Relationships: [];
+      };
+      classes: {
+        Row: { id: string; class_name: string; major: string | null; homeroom_teacher_id: string | null } & Timestamps;
+        Insert: { id?: string; class_name: string; major?: string | null; homeroom_teacher_id?: string | null; created_at?: string };
+        Update: Partial<Database['public']['Tables']['classes']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'classes_homeroom_teacher_id_fkey'; columns: ['homeroom_teacher_id']; isOneToOne: false; referencedRelation: 'teachers'; referencedColumns: ['id'] },
+        ];
+      };
+      students: {
+        Row: { id: string; user_id: string; student_code: string; full_name: string; class_id: string | null; dob: string | null; department: string | null; phone: string | null } & Timestamps;
+        Insert: { id?: string; user_id: string; student_code: string; full_name: string; class_id?: string | null; dob?: string | null; department?: string | null; phone?: string | null; created_at?: string };
+        Update: Partial<Database['public']['Tables']['students']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'students_class_id_fkey'; columns: ['class_id']; isOneToOne: false; referencedRelation: 'classes'; referencedColumns: ['id'] },
+        ];
+      };
+      courses: {
+        Row: { id: string; course_code: string; course_name: string; credits: number; department: string | null; teacher_id: string | null } & Timestamps;
+        Insert: { id?: string; course_code: string; course_name: string; credits?: number; department?: string | null; teacher_id?: string | null; created_at?: string };
+        Update: Partial<Database['public']['Tables']['courses']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'courses_teacher_id_fkey'; columns: ['teacher_id']; isOneToOne: false; referencedRelation: 'teachers'; referencedColumns: ['id'] },
+        ];
+      };
+      semesters: {
+        Row: { id: string; name: string; start_date: string; end_date: string } & Timestamps;
+        Insert: { id?: string; name: string; start_date: string; end_date: string; created_at?: string };
+        Update: Partial<Database['public']['Tables']['semesters']['Insert']>;
+        Relationships: [];
+      };
+      grades: {
+        Row: { id: string; student_id: string; course_id: string; semester_id: string; midterm: number | null; final: number | null; total: number | null; letter: string | null } & WithUpdated;
+        Insert: { id?: string; student_id: string; course_id: string; semester_id: string; midterm?: number | null; final?: number | null; total?: number | null; letter?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database['public']['Tables']['grades']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'grades_student_id_fkey'; columns: ['student_id']; isOneToOne: false; referencedRelation: 'students'; referencedColumns: ['id'] },
+          { foreignKeyName: 'grades_course_id_fkey'; columns: ['course_id']; isOneToOne: false; referencedRelation: 'courses'; referencedColumns: ['id'] },
+          { foreignKeyName: 'grades_semester_id_fkey'; columns: ['semester_id']; isOneToOne: false; referencedRelation: 'semesters'; referencedColumns: ['id'] },
+        ];
+      };
+    };
+    Views: { [_ in never]: never };
     Functions: {
       has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-    }
-    Enums: {
-      app_role: "admin" | "teacher" | "student"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
-
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      app_role: ["admin", "teacher", "student"],
-    },
-  },
-} as const
+        Args: { _user_id: string; _role: 'admin' | 'teacher' | 'student' };
+        Returns: boolean;
+      };
+    };
+    Enums: { app_role: 'admin' | 'teacher' | 'student' };
+    CompositeTypes: { [_ in never]: never };
+  };
+};

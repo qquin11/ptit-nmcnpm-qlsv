@@ -5,65 +5,92 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 
+interface GradeRow {
+  studentId: string;
+  studentCode: string;
+  fullName: string;
+  className: string;
+  midterm: string;
+  final: string;
+  total: number | null;
+}
+
 const TeacherGrades = () => {
   const { user } = useAuth();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [grades, setGrades] = useState<Record<string, { midterm: string; final: string }>>({});
+  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [rows, setRows] = useState<GradeRow[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const init = async () => {
       const { data: teacher } = await supabase.from('teachers').select('id').eq('user_id', user.id).maybeSingle();
       if (!teacher) return;
-      const { data } = await supabase.from('classes').select('*, courses(course_name)').eq('teacher_id', teacher.id);
-      if (data) setClasses(data);
+      const [co, se, cl] = await Promise.all([
+        supabase.from('courses').select('id, course_name, course_code').eq('teacher_id', teacher.id),
+        supabase.from('semesters').select('id, name').order('start_date', { ascending: false }),
+        supabase.from('classes').select('id, class_name').order('class_name'),
+      ]);
+      if (co.data) setCourses(co.data);
+      if (se.data) setSemesters(se.data);
+      if (cl.data) setClasses(cl.data);
     };
-    fetch();
+    init();
   }, [user]);
 
   useEffect(() => {
-    if (!selectedClass) return;
-    const fetch = async () => {
-      const { data } = await supabase
-        .from('enrollments')
-        .select('*, students(full_name, student_code), grades(*)')
-        .eq('class_id', selectedClass);
-      if (data) {
-        setEnrollments(data);
-        const g: Record<string, { midterm: string; final: string }> = {};
-        data.forEach((e: any) => {
-          const grade = Array.isArray(e.grades) ? e.grades[0] : e.grades;
-          g[e.id] = {
-            midterm: grade?.midterm?.toString() || '',
-            final: grade?.final?.toString() || '',
-          };
-        });
-        setGrades(g);
-      }
-    };
-    fetch();
-  }, [selectedClass]);
-
-  const handleSave = async (enrollmentId: string) => {
-    const g = grades[enrollmentId];
-    if (!g) return;
-    const midterm = parseFloat(g.midterm) || null;
-    const final_val = parseFloat(g.final) || null;
-
-    const enrollment = enrollments.find(e => e.id === enrollmentId);
-    const existingGrade = Array.isArray(enrollment?.grades) ? enrollment.grades[0] : enrollment?.grades;
-
-    if (existingGrade) {
-      await supabase.from('grades').update({ midterm, final: final_val }).eq('id', existingGrade.id);
-    } else {
-      await supabase.from('grades').insert({ enrollment_id: enrollmentId, midterm, final: final_val });
+    if (!selectedCourse || !selectedSemester || !selectedClass) {
+      setRows([]);
+      return;
     }
+    const load = async () => {
+      const [st, gr] = await Promise.all([
+        supabase.from('students').select('id, student_code, full_name, classes(class_name)').eq('class_id', selectedClass),
+        supabase.from('grades').select('*').eq('course_id', selectedCourse).eq('semester_id', selectedSemester),
+      ]);
+      const gradeByStudent = new Map<string, any>();
+      (gr.data || []).forEach((g: any) => gradeByStudent.set(g.student_id, g));
+      const r: GradeRow[] = (st.data || []).map((s: any) => {
+        const g = gradeByStudent.get(s.id);
+        return {
+          studentId: s.id,
+          studentCode: s.student_code,
+          fullName: s.full_name,
+          className: s.classes?.class_name || '—',
+          midterm: g?.midterm?.toString() || '',
+          final: g?.final?.toString() || '',
+          total: g?.total ?? null,
+        };
+      });
+      setRows(r);
+    };
+    load();
+  }, [selectedCourse, selectedSemester, selectedClass]);
+
+  const updateRow = (studentId: string, field: 'midterm' | 'final', value: string) => {
+    setRows(rows.map(r => r.studentId === studentId ? { ...r, [field]: value } : r));
+  };
+
+  const handleSave = async (row: GradeRow) => {
+    const midterm = row.midterm === '' ? null : parseFloat(row.midterm);
+    const final_val = row.final === '' ? null : parseFloat(row.final);
+    const { error } = await supabase.from('grades').upsert({
+      student_id: row.studentId,
+      course_id: selectedCourse,
+      semester_id: selectedSemester,
+      midterm,
+      final: final_val,
+    }, { onConflict: 'student_id,course_id,semester_id' });
+    if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
     toast({ title: 'Đã lưu điểm' });
   };
 
@@ -71,60 +98,55 @@ const TeacherGrades = () => {
     <div className="page-container">
       <h1 className="dashboard-header">Nhập điểm</h1>
 
-      <div className="flex flex-wrap gap-3">
-        {classes.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setSelectedClass(c.id)}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${selectedClass === c.id ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'}`}
-          >
-            {c.class_name}
-          </button>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+          <SelectTrigger><SelectValue placeholder="Chọn môn học" /></SelectTrigger>
+          <SelectContent>{courses.map(c => <SelectItem key={c.id} value={c.id}>{c.course_name}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+          <SelectTrigger><SelectValue placeholder="Chọn học kỳ" /></SelectTrigger>
+          <SelectContent>{semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={selectedClass} onValueChange={setSelectedClass}>
+          <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
+          <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
+        </Select>
       </div>
 
-      {selectedClass && (
+      {selectedCourse && selectedSemester && selectedClass && (
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sinh viên</TableHead>
+                <TableHead>Mã SV</TableHead>
+                <TableHead>Họ tên</TableHead>
                 <TableHead>Giữa kỳ</TableHead>
                 <TableHead>Cuối kỳ</TableHead>
+                <TableHead>Tổng</TableHead>
                 <TableHead className="w-20">Lưu</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {enrollments.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-medium">{(e.students as any)?.full_name}</TableCell>
+              {rows.map((r) => (
+                <TableRow key={r.studentId}>
+                  <TableCell className="font-mono text-sm">{r.studentCode}</TableCell>
+                  <TableCell className="font-medium">{r.fullName}</TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      className="w-20"
-                      value={grades[e.id]?.midterm || ''}
-                      onChange={(ev) => setGrades({ ...grades, [e.id]: { ...grades[e.id], midterm: ev.target.value } })}
-                      min="0" max="100"
-                    />
+                    <Input type="number" className="w-20" value={r.midterm} min="0" max="100"
+                      onChange={(ev) => updateRow(r.studentId, 'midterm', ev.target.value)} />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="number"
-                      className="w-20"
-                      value={grades[e.id]?.final || ''}
-                      onChange={(ev) => setGrades({ ...grades, [e.id]: { ...grades[e.id], final: ev.target.value } })}
-                      min="0" max="100"
-                    />
+                    <Input type="number" className="w-20" value={r.final} min="0" max="100"
+                      onChange={(ev) => updateRow(r.studentId, 'final', ev.target.value)} />
                   </TableCell>
+                  <TableCell className="font-bold">{r.total ?? '—'}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleSave(e.id)}>
-                      <Save size={14} />
-                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleSave(r)}><Save size={14} /></Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {enrollments.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Chưa có sinh viên</TableCell></TableRow>
+              {rows.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Chưa có sinh viên</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
