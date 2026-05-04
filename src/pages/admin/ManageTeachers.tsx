@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,7 @@ const ManageTeachers = () => {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Teacher | null>(null);
-  const [form, setForm] = useState({ teacher_code: '', full_name: '', department: '', phone: '' });
+  const [form, setForm] = useState({ teacher_code: '', full_name: '', department: '', phone: '', email: '', password: '' });
   const { toast } = useToast();
 
   const fetch = async () => {
@@ -33,11 +34,11 @@ const ManageTeachers = () => {
 
   useEffect(() => { fetch(); }, []);
 
-  const resetForm = () => { setForm({ teacher_code: '', full_name: '', department: '', phone: '' }); setEditing(null); };
+  const resetForm = () => { setForm({ teacher_code: '', full_name: '', department: '', phone: '', email: '', password: '' }); setEditing(null); };
 
   const handleEdit = (t: Teacher) => {
     setEditing(t);
-    setForm({ teacher_code: t.teacher_code, full_name: t.full_name, department: t.department || '', phone: t.phone || '' });
+    setForm({ teacher_code: t.teacher_code, full_name: t.full_name, department: t.department || '', phone: t.phone || '', email: '', password: '' });
     setDialogOpen(true);
   };
 
@@ -55,7 +56,42 @@ const ManageTeachers = () => {
       }).eq('id', editing.id);
       if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
       toast({ title: 'Cập nhật giảng viên thành công' });
+    } else {
+      if (!form.email.trim() || !form.password.trim()) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
+        return;
+      }
+      const tempClient = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        { auth: { persistSession: false, autoRefreshToken: false } }
+      );
+      const { data: authData, error: authError } = await tempClient.auth.signUp({
+        email: form.email.trim(),
+        password: form.password.trim(),
+      });
+      if (authError || !authData.user) {
+        toast({ variant: 'destructive', title: 'Lỗi tạo tài khoản', description: authError?.message || 'Không tạo được tài khoản' });
+        return;
+      }
+      const userId = authData.user.id;
+      const [teacherRes, roleRes] = await Promise.all([
+        supabase.from('teachers').insert({
+          user_id: userId,
+          teacher_code: form.teacher_code.trim(),
+          full_name: form.full_name.trim(),
+          department: form.department.trim() || null,
+          phone: form.phone.trim() || null,
+        }),
+        supabase.from('user_roles').insert({ user_id: userId, role: 'teacher' }),
+      ]);
+      if (teacherRes.error || roleRes.error) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: teacherRes.error?.message || roleRes.error?.message });
+        return;
+      }
+      toast({ title: 'Thêm giảng viên thành công' });
     }
+
     setDialogOpen(false);
     resetForm();
     fetch();
@@ -81,6 +117,12 @@ const ManageTeachers = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa Giảng viên' : 'Thêm Giảng viên'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              {!editing && (
+                <>
+                  <div><Label>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                </>
+              )}
               <div><Label>Mã Giảng viên</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
               <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
               <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>

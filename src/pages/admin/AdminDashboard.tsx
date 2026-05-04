@@ -38,7 +38,7 @@ const AdminDashboard = () => {
       }
 
       // Average grades
-      const { data: grades } = await supabase.from('grades').select('total, enrollment_id');
+      const { data: grades } = await supabase.from('grades').select('total');
       if (grades && grades.length > 0) {
         const avg = grades.reduce((sum, g) => sum + (Number(g.total) || 0), 0) / grades.length;
         setGradeData([
