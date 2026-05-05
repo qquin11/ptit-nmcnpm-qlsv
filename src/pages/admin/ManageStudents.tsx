@@ -22,6 +22,9 @@ interface Student {
   classes?: { class_name: string } | null;
   user_id: string;
   email?: string | null;
+  gender: string | null;
+  address: string | null;
+  status: string | null;
 }
 
 const ManageStudents = () => {
@@ -30,7 +33,7 @@ const ManageStudents = () => {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
-  const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '' });
+  const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
   const { toast } = useToast();
 
   const fetchStudents = async () => {
@@ -53,13 +56,13 @@ const ManageStudents = () => {
   useEffect(() => { fetchStudents(); }, []);
 
   const resetForm = () => {
-    setForm({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '' });
+    setForm({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
     setEditing(null);
   };
 
   const handleEdit = (s: Student) => {
     setEditing(s);
-    setForm({ student_code: s.student_code, full_name: s.full_name, dob: s.dob || '', department: s.department || '', phone: s.phone || '', class_id: s.class_id || '', email: '', password: '' });
+    setForm({ student_code: s.student_code, full_name: s.full_name, dob: s.dob || '', department: s.department || '', phone: s.phone || '', class_id: s.class_id || '', email: '', password: '', gender: s.gender || '', address: s.address || '', status: s.status || 'active' });
     setDialogOpen(true);
   };
 
@@ -77,6 +80,9 @@ const ManageStudents = () => {
         department: form.department.trim() || null,
         phone: form.phone.trim() || null,
         class_id: form.class_id || null,
+        gender: form.gender || null,
+        address: form.address.trim() || null,
+        status: form.status || 'active',
       }).eq('id', editing.id);
       if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
       toast({ title: 'Cập nhật sinh viên thành công' });
@@ -109,6 +115,9 @@ const ManageStudents = () => {
           department: form.department.trim() || null,
           phone: form.phone.trim() || null,
           class_id: form.class_id || null,
+          gender: form.gender || null,
+          address: form.address.trim() || null,
+          status: form.status || 'active',
         }),
         supabase.from('user_roles').insert({ user_id: userId, role: 'student' }),
       ]);
@@ -125,6 +134,16 @@ const ManageStudents = () => {
   };
 
   const className = (s: Student) => s.classes?.class_name || '—';
+
+  const statusLabel = (status: string | null) => {
+    switch (status) {
+      case 'active': return 'Đang học';
+      case 'interrupted': return 'Bảo lưu';
+      case 'terminated': return 'Thôi học';
+      case 'graduated': return 'Đã tốt nghiệp';
+      default: return '—';
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa sinh viên này?')) return;
@@ -161,7 +180,17 @@ const ManageStudents = () => {
               <div><Label>Mã Sinh viên</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
               <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
               <div><Label>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
-              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div>
+                <Label>Giới tính</Label>
+                <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v })}>
+                  <SelectTrigger><SelectValue placeholder="Chọn giới tính" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Nam</SelectItem>
+                    <SelectItem value="F">Nữ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Chuyên Ngành</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
               <div>
                 <Label>Lớp</Label>
                 <Select value={form.class_id} onValueChange={v => setForm({ ...form, class_id: v })}>
@@ -170,6 +199,19 @@ const ManageStudents = () => {
                 </Select>
               </div>
               <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+              <div><Label>Địa chỉ</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+              <div>
+                <Label>Trạng thái</Label>
+                <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Đang học</SelectItem>
+                    <SelectItem value="interrupted">Bảo lưu</SelectItem>
+                    <SelectItem value="terminated">Thôi học</SelectItem>
+                    <SelectItem value="graduated">Đã tốt nghiệp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
@@ -188,9 +230,10 @@ const ManageStudents = () => {
               <TableHead>Mã SV</TableHead>
               <TableHead>Họ tên</TableHead>
               <TableHead>Lớp</TableHead>
-              <TableHead>Khoa</TableHead>
+              <TableHead>Chuyên Ngành</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Điện thoại</TableHead>
+              <TableHead>Trạng thái</TableHead>
               <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
@@ -203,6 +246,7 @@ const ManageStudents = () => {
                 <TableCell>{s.department || '—'}</TableCell>
                 <TableCell>{s.email || '—'}</TableCell>
                 <TableCell>{s.phone || '—'}</TableCell>
+                <TableCell>{statusLabel(s.status)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(s)}><Pencil size={14} /></Button>
@@ -212,7 +256,7 @@ const ManageStudents = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
