@@ -8,11 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 
 const ManageClasses = () => {
   const [classes, setClasses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ class_name: '', major: '', homeroom_teacher_id: '' });
@@ -93,6 +94,11 @@ const ManageClasses = () => {
         </Dialog>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Tìm lớp..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
       <Card>
         <Table>
           <TableHeader>
@@ -104,7 +110,10 @@ const ManageClasses = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {classes.map((c) => (
+            {classes.filter(c =>
+              c.class_name.toLowerCase().includes(search.toLowerCase()) ||
+              (c.major || '').toLowerCase().includes(search.toLowerCase())
+            ).map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.class_name}</TableCell>
                 <TableCell>{c.major || '—'}</TableCell>
@@ -117,8 +126,11 @@ const ManageClasses = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {classes.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không có lớp nào</TableCell></TableRow>
+            {classes.filter(c =>
+              c.class_name.toLowerCase().includes(search.toLowerCase()) ||
+              (c.major || '').toLowerCase().includes(search.toLowerCase())
+            ).length === 0 && (
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không tìm thấy lớp</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

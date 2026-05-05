@@ -7,10 +7,11 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 
 const ManageSemesters = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: '', start_date: '', end_date: '' });
@@ -73,6 +74,12 @@ const ManageSemesters = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      <div className="relative max-w-sm">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Tìm học kỳ..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
       <Card>
         <Table>
           <TableHeader>
@@ -84,7 +91,9 @@ const ManageSemesters = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {semesters.map((s) => (
+            {semesters.filter(s =>
+              s.name.toLowerCase().includes(search.toLowerCase())
+            ).map((s) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.name}</TableCell>
                 <TableCell>{s.start_date}</TableCell>
@@ -97,8 +106,10 @@ const ManageSemesters = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {semesters.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không có học kỳ nào</TableCell></TableRow>
+            {semesters.filter(s =>
+              s.name.toLowerCase().includes(search.toLowerCase())
+            ).length === 0 && (
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không tìm thấy học kỳ</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

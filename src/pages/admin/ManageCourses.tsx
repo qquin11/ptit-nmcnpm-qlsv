@@ -8,11 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' });
@@ -97,6 +98,11 @@ const ManageCourses = () => {
         </Dialog>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Tìm môn học..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
       <Card>
         <Table>
           <TableHeader>
@@ -110,7 +116,10 @@ const ManageCourses = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {courses.map((c) => (
+            {courses.filter(c =>
+              c.course_name.toLowerCase().includes(search.toLowerCase()) ||
+              c.course_code.toLowerCase().includes(search.toLowerCase())
+            ).map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-mono text-sm">{c.course_code}</TableCell>
                 <TableCell className="font-medium">{c.course_name}</TableCell>
@@ -125,8 +134,11 @@ const ManageCourses = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {courses.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không có môn học nào</TableCell></TableRow>
+            {courses.filter(c =>
+              c.course_name.toLowerCase().includes(search.toLowerCase()) ||
+              c.course_code.toLowerCase().includes(search.toLowerCase())
+            ).length === 0 && (
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không tìm thấy môn học</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

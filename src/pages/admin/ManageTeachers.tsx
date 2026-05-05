@@ -17,6 +17,7 @@ interface Teacher {
   department: string | null;
   phone: string | null;
   user_id: string;
+  email?: string | null;
 }
 
 const ManageTeachers = () => {
@@ -29,7 +30,15 @@ const ManageTeachers = () => {
 
   const fetch = async () => {
     const { data } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
-    if (data) setTeachers(data);
+    if (data) {
+      const userIds = data.map((t: any) => t.user_id).filter(Boolean);
+      let emailMap: Record<string, string> = {};
+      if (userIds.length) {
+        const { data: profs } = await supabase.from('profiles').select('user_id, email').in('user_id', userIds);
+        if (profs) emailMap = Object.fromEntries(profs.map((p: any) => [p.user_id, p.email]));
+      }
+      setTeachers(data.map((t: any) => ({ ...t, email: emailMap[t.user_id] ?? null })));
+    }
   };
 
   useEffect(() => { fetch(); }, []);
@@ -145,6 +154,7 @@ const ManageTeachers = () => {
               <TableHead>Mã GV</TableHead>
               <TableHead>Họ tên</TableHead>
               <TableHead>Khoa</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Điện thoại</TableHead>
               <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
@@ -155,6 +165,7 @@ const ManageTeachers = () => {
                 <TableCell className="font-mono text-sm">{t.teacher_code}</TableCell>
                 <TableCell className="font-medium">{t.full_name}</TableCell>
                 <TableCell>{t.department || '—'}</TableCell>
+                <TableCell>{t.email || '—'}</TableCell>
                 <TableCell>{t.phone || '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
@@ -165,7 +176,7 @@ const ManageTeachers = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Không tìm thấy giảng viên</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không tìm thấy giảng viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
