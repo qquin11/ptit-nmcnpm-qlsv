@@ -59,8 +59,8 @@ export type Database = {
         Relationships: [];
       };
       grades: {
-        Row: { id: string; student_id: string; course_id: string; semester_id: string; midterm: number | null; final: number | null; total: number | null; letter: string | null } & WithUpdated;
-        Insert: { id?: string; student_id: string; course_id: string; semester_id: string; midterm?: number | null; final?: number | null; total?: number | null; letter?: string | null; created_at?: string; updated_at?: string };
+        Row: { id: string; student_id: string; course_id: string; semester_id: string; attendance: number | null; midterm: number | null; final: number | null; average: number | null; letter: string | null } & WithUpdated;
+        Insert: { id?: string; student_id: string; course_id: string; semester_id: string; attendance?: number | null; midterm?: number | null; final?: number | null; average?: number | null; letter?: string | null; created_at?: string; updated_at?: string };
         Update: Partial<Database['public']['Tables']['grades']['Insert']>;
         Relationships: [
           { foreignKeyName: 'grades_student_id_fkey'; columns: ['student_id']; isOneToOne: false; referencedRelation: 'students'; referencedColumns: ['id'] },

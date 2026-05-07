@@ -166,7 +166,7 @@ const ManageStudents = () => {
           <DialogTrigger asChild>
             <Button><Plus size={16} className="mr-2" />Thêm Sinh viên</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? 'Sửa Sinh viên' : 'Thêm Sinh viên'}</DialogTitle>
             </DialogHeader>

@@ -38,9 +38,9 @@ const AdminDashboard = () => {
       }
 
       // Average grades
-      const { data: grades } = await supabase.from('grades').select('total');
+      const { data: grades } = await supabase.from('grades').select('average');
       if (grades && grades.length > 0) {
-        const avg = grades.reduce((sum, g) => sum + (Number(g.total) || 0), 0) / grades.length;
+        const avg = grades.reduce((sum, g) => sum + (Number(g.average) || 0), 0) / grades.length;
         setGradeData([
           { name: 'Điểm trung bình', avg: Math.round(avg * 100) / 100 },
           { name: 'Điểm tối đa', avg: 100 },
