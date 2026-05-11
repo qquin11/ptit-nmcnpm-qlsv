@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Search } from 'lucide-react';
+import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -39,16 +40,22 @@ const ManageCourses = () => {
   };
 
   const handleSave = async () => {
-    if (!form.course_code.trim() || !form.course_name.trim()) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã môn học và tên là bắt buộc' });
+    if (!form.course_code.trim() || !form.course_name.trim() || !form.credits.trim() || !form.department.trim() || !form.teacher_id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
+      return;
+    }
+    const code = form.course_code.trim();
+    const dup = await supabase.from('courses').select('id').eq('course_code', code).maybeSingle();
+    if (dup.data && dup.data.id !== editing?.id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã môn học đã tồn tại' });
       return;
     }
     const payload = {
-      course_code: form.course_code.trim(),
+      course_code: code,
       course_name: form.course_name.trim(),
       credits: parseInt(form.credits) || 3,
-      department: form.department.trim() || null,
-      teacher_id: form.teacher_id || null,
+      department: form.department.trim(),
+      teacher_id: form.teacher_id,
     };
 
     if (editing) {
@@ -66,7 +73,12 @@ const ManageCourses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa môn học này?')) return;
+    const { data: gradeRows } = await supabase.from('grades').select('student_id').eq('course_id', id);
+    const studentCount = new Set((gradeRows || []).map((g: any) => g.student_id)).size;
+    if (studentCount > 0) {
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Môn học này đã có ${studentCount} sinh viên theo học. Vui lòng xóa các bản ghi liên quan trước.` });
+      return;
+    }
     await supabase.from('courses').delete().eq('id', id);
     toast({ title: 'Đã xóa môn học' });
     fetchData();
@@ -83,10 +95,10 @@ const ManageCourses = () => {
             <div className="space-y-3">
               <div><Label required>Mã Môn học</Label><Input value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })} /></div>
               <div><Label required>Tên Môn học</Label><Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} /></div>
-              <div><Label>Số tín chỉ</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
-              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div><Label required>Số tín chỉ</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
+              <div><Label required>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
               <div>
-                <Label>Giảng viên</Label>
+                <Label required>Giảng viên</Label>
                 <Select value={form.teacher_id} onValueChange={v => setForm({ ...form, teacher_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Chọn giảng viên" /></SelectTrigger>
                   <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
@@ -129,7 +141,7 @@ const ManageCourses = () => {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                    <ConfirmDeleteButton onConfirm={() => handleDelete(c.id)} description={`Bạn có chắc muốn xóa môn học "${c.course_name}"? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
               </TableRow>

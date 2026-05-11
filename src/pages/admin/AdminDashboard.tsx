@@ -9,6 +9,7 @@ const COLORS = ['hsl(230,75%,57%)', 'hsl(160,70%,40%)', 'hsl(38,92%,50%)', 'hsl(
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ students: 0, teachers: 0, courses: 0, classes: 0 });
   const [deptData, setDeptData] = useState<{ name: string; value: number }[]>([]);
+  const [teacherDeptData, setTeacherDeptData] = useState<{ name: string; value: number }[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -34,6 +35,17 @@ const AdminDashboard = () => {
           depts[d] = (depts[d] || 0) + 1;
         });
         setDeptData(Object.entries(depts).map(([name, value]) => ({ name, value })));
+      }
+
+      // Teachers by department
+      const { data: teachersByDept } = await supabase.from('teachers').select('department');
+      if (teachersByDept) {
+        const depts: Record<string, number> = {};
+        teachersByDept.forEach((t) => {
+          const d = t.department || 'Chưa phân khoa';
+          depts[d] = (depts[d] || 0) + 1;
+        });
+        setTeacherDeptData(Object.entries(depts).map(([name, value]) => ({ name, value })));
       }
     };
     fetchStats();
@@ -64,7 +76,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-base">Sinh viên theo Khoa</CardTitle></CardHeader>
           <CardContent>
@@ -81,6 +93,26 @@ const AdminDashboard = () => {
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-muted-foreground py-8 text-center">Chưa có dữ liệu sinh viên</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Giảng viên theo Khoa</CardTitle></CardHeader>
+          <CardContent>
+            {teacherDeptData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={teacherDeptData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                    {teacherDeptData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">Chưa có dữ liệu giảng viên</p>
             )}
           </CardContent>
         </Card>

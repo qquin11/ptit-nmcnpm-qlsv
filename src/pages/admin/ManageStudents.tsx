@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Search, BookOpen } from 'lucide-react';
+import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 interface Student {
   id: string;
@@ -74,6 +75,13 @@ const ManageStudents = () => {
       return;
     }
 
+    const code = form.student_code.trim();
+    const dupCode = await supabase.from('students').select('id').eq('student_code', code).maybeSingle();
+    if (dupCode.data && dupCode.data.id !== editing?.id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã sinh viên đã tồn tại' });
+      return;
+    }
+
     if (editing) {
       const { error } = await supabase.from('students').update({
         student_code: form.student_code.trim(),
@@ -91,6 +99,12 @@ const ManageStudents = () => {
     } else {
       if (!form.email.trim() || !form.password.trim()) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
+        return;
+      }
+      const email = form.email.trim();
+      const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
+      if (dupEmail.data) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
         return;
       }
       // Use a temporary client (no session persistence) so admin stays logged in
@@ -165,7 +179,11 @@ const ManageStudents = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa sinh viên này?')) return;
+    const { count } = await supabase.from('grades').select('id', { count: 'exact', head: true }).eq('student_id', id);
+    if ((count ?? 0) > 0) {
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Sinh viên này đã có ${count} bản ghi điểm. Vui lòng xóa các bản ghi liên quan trước.` });
+      return;
+    }
     const { error } = await supabase.from('students').delete().eq('id', id);
     if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
     toast({ title: 'Đã xóa sinh viên' });
@@ -270,7 +288,7 @@ const ManageStudents = () => {
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleViewCourses(s)} title="Xem môn học"><BookOpen size={14} /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(s)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                    <ConfirmDeleteButton onConfirm={() => handleDelete(s.id)} description={`Bạn có chắc muốn xóa sinh viên "${s.full_name}" (${s.student_code})? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
               </TableRow>
