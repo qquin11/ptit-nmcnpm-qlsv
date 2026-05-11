@@ -66,9 +66,9 @@ const ManageSemesters = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa' : 'Thêm'} Học kỳ</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Tên Học kỳ</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="HK1 2025-2026" /></div>
-              <div><Label>Ngày bắt đầu</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div><Label>Ngày kết thúc</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
+              <div><Label required>Tên Học kỳ</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="HK1 2025-2026" /></div>
+              <div><Label required>Ngày bắt đầu</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
+              <div><Label required>Ngày kết thúc</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
               <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>

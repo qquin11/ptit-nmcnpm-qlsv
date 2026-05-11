@@ -128,12 +128,12 @@ const ManageTeachers = () => {
             <div className="space-y-3">
               {!editing && (
                 <>
-                  <div><Label>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <div><Label required>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label required>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
                 </>
               )}
-              <div><Label>Mã Giảng viên</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
-              <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div><Label required>Mã Giảng viên</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
+              <div><Label required>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
               <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
               <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
               <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>

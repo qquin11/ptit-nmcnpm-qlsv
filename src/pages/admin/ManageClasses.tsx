@@ -79,7 +79,7 @@ const ManageClasses = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa Lớp' : 'Thêm Lớp'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Tên Lớp</Label><Input placeholder="VD: D20CN01" value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
+              <div><Label required>Tên Lớp</Label><Input placeholder="VD: D20CN01" value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
               <div><Label>Chuyên ngành</Label><Input value={form.major} onChange={e => setForm({ ...form, major: e.target.value })} /></div>
               <div>
                 <Label>Giáo viên chủ nhiệm</Label>
