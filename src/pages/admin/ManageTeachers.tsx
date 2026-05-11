@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Search } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
@@ -24,8 +25,10 @@ interface Teacher {
 const ManageTeachers = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [search, setSearch] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Teacher | null>(null);
+  const [viewing, setViewing] = useState<Teacher | null>(null);
   const [form, setForm] = useState({ teacher_code: '', full_name: '', department: '', phone: '', email: '', password: '' });
   const { toast } = useToast();
 
@@ -138,8 +141,11 @@ const ManageTeachers = () => {
     fetch();
   };
 
+  const departmentOptions = Array.from(new Set(teachers.map(t => t.department).filter(Boolean))) as string[];
+
   const filtered = teachers.filter(t =>
-    t.full_name.toLowerCase().includes(search.toLowerCase()) || t.teacher_code.toLowerCase().includes(search.toLowerCase())
+    (t.full_name.toLowerCase().includes(search.toLowerCase()) || t.teacher_code.toLowerCase().includes(search.toLowerCase())) &&
+    (filterDepartment === 'all' || t.department === filterDepartment)
   );
 
   return (
@@ -167,15 +173,25 @@ const ManageTeachers = () => {
         </Dialog>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Tìm giảng viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Tìm giảng viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Khoa" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả khoa</SelectItem>
+            {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">STT</TableHead>
               <TableHead>Mã GV</TableHead>
               <TableHead>Họ tên</TableHead>
               <TableHead>Khoa</TableHead>
@@ -185,9 +201,10 @@ const ManageTeachers = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((t) => (
+            {filtered.map((t, i) => (
               <TableRow key={t.id}>
-                <TableCell className="font-mono text-sm">{t.teacher_code}</TableCell>
+                <TableCell>{i + 1}</TableCell>
+                <TableCell><button onClick={() => setViewing(t)} className="font-mono text-sm text-primary hover:underline">{t.teacher_code}</button></TableCell>
                 <TableCell className="font-medium">{t.full_name}</TableCell>
                 <TableCell>{t.department || '—'}</TableCell>
                 <TableCell>{t.email || '—'}</TableCell>
@@ -201,11 +218,26 @@ const ManageTeachers = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Không tìm thấy giảng viên</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Không tìm thấy giảng viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Chi tiết giảng viên</DialogTitle></DialogHeader>
+          {viewing && (
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">Mã GV</dt><dd className="col-span-2 font-mono">{viewing.teacher_code}</dd>
+              <dt className="text-muted-foreground">Họ tên</dt><dd className="col-span-2 font-medium">{viewing.full_name}</dd>
+              <dt className="text-muted-foreground">Khoa</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
+              <dt className="text-muted-foreground">Email</dt><dd className="col-span-2">{viewing.email || '—'}</dd>
+              <dt className="text-muted-foreground">Điện thoại</dt><dd className="col-span-2">{viewing.phone || '—'}</dd>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

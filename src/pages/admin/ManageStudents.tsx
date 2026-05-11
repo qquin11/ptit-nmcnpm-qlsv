@@ -32,10 +32,13 @@ const ManageStudents = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const [filterClassId, setFilterClassId] = useState<string>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
   const [coursesDialogStudent, setCoursesDialogStudent] = useState<Student | null>(null);
+  const [viewing, setViewing] = useState<Student | null>(null);
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const { toast } = useToast();
 
@@ -190,9 +193,13 @@ const ManageStudents = () => {
     fetchStudents();
   };
 
+  const departmentOptions = Array.from(new Set(students.map(s => s.department).filter(Boolean))) as string[];
+
   const filtered = students.filter(s =>
-    s.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    s.student_code.toLowerCase().includes(search.toLowerCase())
+    (s.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      s.student_code.toLowerCase().includes(search.toLowerCase())) &&
+    (filterClassId === 'all' || s.class_id === filterClassId) &&
+    (filterDepartment === 'all' || s.department === filterDepartment)
   );
 
   return (
@@ -255,15 +262,32 @@ const ManageStudents = () => {
         </Dialog>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Tìm sinh viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Tìm sinh viên..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Select value={filterClassId} onValueChange={setFilterClassId}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Lớp" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả lớp</SelectItem>
+            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Chuyên Ngành" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả chuyên ngành</SelectItem>
+            {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">STT</TableHead>
               <TableHead>Mã SV</TableHead>
               <TableHead>Họ tên</TableHead>
               <TableHead>Lớp</TableHead>
@@ -275,9 +299,10 @@ const ManageStudents = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((s) => (
+            {filtered.map((s, i) => (
               <TableRow key={s.id}>
-                <TableCell className="font-mono text-sm">{s.student_code}</TableCell>
+                <TableCell>{i + 1}</TableCell>
+                <TableCell><button onClick={() => setViewing(s)} className="font-mono text-sm text-primary hover:underline">{s.student_code}</button></TableCell>
                 <TableCell className="font-medium">{s.full_name}</TableCell>
                 <TableCell>{className(s)}</TableCell>
                 <TableCell>{s.department || '—'}</TableCell>
@@ -294,7 +319,7 @@ const ManageStudents = () => {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Không tìm thấy sinh viên</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -333,6 +358,26 @@ const ManageStudents = () => {
               )}
             </TableBody>
           </Table>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Chi tiết sinh viên</DialogTitle></DialogHeader>
+          {viewing && (
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">Mã SV</dt><dd className="col-span-2 font-mono">{viewing.student_code}</dd>
+              <dt className="text-muted-foreground">Họ tên</dt><dd className="col-span-2 font-medium">{viewing.full_name}</dd>
+              <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob || '—'}</dd>
+              <dt className="text-muted-foreground">Giới tính</dt><dd className="col-span-2">{viewing.gender === 'M' ? 'Nam' : viewing.gender === 'F' ? 'Nữ' : '—'}</dd>
+              <dt className="text-muted-foreground">Chuyên ngành</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
+              <dt className="text-muted-foreground">Lớp</dt><dd className="col-span-2">{viewing.classes?.class_name || '—'}</dd>
+              <dt className="text-muted-foreground">Email</dt><dd className="col-span-2">{viewing.email || '—'}</dd>
+              <dt className="text-muted-foreground">Điện thoại</dt><dd className="col-span-2">{viewing.phone || '—'}</dd>
+              <dt className="text-muted-foreground">Địa chỉ</dt><dd className="col-span-2">{viewing.address || '—'}</dd>
+              <dt className="text-muted-foreground">Trạng thái</dt><dd className="col-span-2">{statusLabel(viewing.status)}</dd>
+            </dl>
+          )}
         </DialogContent>
       </Dialog>
     </div>

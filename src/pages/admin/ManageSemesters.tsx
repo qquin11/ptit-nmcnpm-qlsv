@@ -15,6 +15,7 @@ const ManageSemesters = () => {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [viewing, setViewing] = useState<any>(null);
   const [form, setForm] = useState({ name: '', start_date: '', end_date: '' });
   const { toast } = useToast();
 
@@ -101,7 +102,7 @@ const ManageSemesters = () => {
               s.name.toLowerCase().includes(search.toLowerCase())
             ).map((s) => (
               <TableRow key={s.id}>
-                <TableCell className="font-medium">{s.name}</TableCell>
+                <TableCell><button onClick={() => setViewing(s)} className="font-medium text-primary hover:underline">{s.name}</button></TableCell>
                 <TableCell>{s.start_date}</TableCell>
                 <TableCell>{s.end_date}</TableCell>
                 <TableCell>
@@ -120,6 +121,19 @@ const ManageSemesters = () => {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Chi tiết học kỳ</DialogTitle></DialogHeader>
+          {viewing && (
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">Tên học kỳ</dt><dd className="col-span-2 font-medium">{viewing.name}</dd>
+              <dt className="text-muted-foreground">Ngày bắt đầu</dt><dd className="col-span-2">{viewing.start_date}</dd>
+              <dt className="text-muted-foreground">Ngày kết thúc</dt><dd className="col-span-2">{viewing.end_date}</dd>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
