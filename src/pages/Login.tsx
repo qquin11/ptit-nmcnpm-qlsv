@@ -44,7 +44,7 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t('login.email')}</Label>
+              <Label required htmlFor="email">{t('login.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -56,7 +56,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t('login.password')}</Label>
+              <Label required htmlFor="password">{t('login.password')}</Label>
               <Input
                 id="password"
                 type="password"

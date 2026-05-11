@@ -69,8 +69,8 @@ const ManageStudents = () => {
   };
 
   const handleSave = async () => {
-    if (!form.student_code.trim() || !form.full_name.trim()) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã sinh viên và họ tên là bắt buộc' });
+    if (!form.student_code.trim() || !form.full_name.trim() || !form.dob || !form.gender || !form.department.trim() || !form.class_id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
       return;
     }
 
@@ -192,15 +192,15 @@ const ManageStudents = () => {
             <div className="space-y-3">
               {!editing && (
                 <>
-                  <div><Label>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <div><Label required>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label required>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
                 </>
               )}
-              <div><Label>Mã Sinh viên</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
-              <div><Label>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
-              <div><Label>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
+              <div><Label required>Mã Sinh viên</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
+              <div><Label required>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div><Label required>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
               <div>
-                <Label>Giới tính</Label>
+                <Label required>Giới tính</Label>
                 <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v })}>
                   <SelectTrigger><SelectValue placeholder="Chọn giới tính" /></SelectTrigger>
                   <SelectContent>
@@ -209,9 +209,9 @@ const ManageStudents = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Chuyên Ngành</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div><Label required>Chuyên Ngành</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
               <div>
-                <Label>Lớp</Label>
+                <Label required>Lớp</Label>
                 <Select value={form.class_id} onValueChange={v => setForm({ ...form, class_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
                   <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
