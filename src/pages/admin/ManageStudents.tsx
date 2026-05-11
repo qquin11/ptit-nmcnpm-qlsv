@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -34,6 +34,8 @@ const ManageStudents = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
   const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
+  const [coursesDialogStudent, setCoursesDialogStudent] = useState<Student | null>(null);
+  const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const { toast } = useToast();
 
   const fetchStudents = async () => {
@@ -145,6 +147,23 @@ const ManageStudents = () => {
     }
   };
 
+  const handleViewCourses = async (s: Student) => {
+    setCoursesDialogStudent(s);
+    setStudentCourses([]);
+    const { data } = await supabase
+      .from('grades')
+      .select('id, average, courses(course_code, course_name, credits), semesters(name, start_date)')
+      .eq('student_id', s.id);
+    if (data) {
+      const sorted = [...data].sort((a: any, b: any) => {
+        const da = a.semesters?.start_date || '';
+        const db = b.semesters?.start_date || '';
+        return da < db ? 1 : -1;
+      });
+      setStudentCourses(sorted);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa sinh viên này?')) return;
     const { error } = await supabase.from('students').delete().eq('id', id);
@@ -249,6 +268,7 @@ const ManageStudents = () => {
                 <TableCell>{statusLabel(s.status)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleViewCourses(s)} title="Xem môn học"><BookOpen size={14} /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(s)}><Pencil size={14} /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 size={14} className="text-destructive" /></Button>
                   </div>
@@ -261,6 +281,42 @@ const ManageStudents = () => {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!coursesDialogStudent} onOpenChange={(o) => { if (!o) { setCoursesDialogStudent(null); setStudentCourses([]); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Môn học của {coursesDialogStudent?.full_name}
+              {coursesDialogStudent?.student_code ? ` (${coursesDialogStudent.student_code})` : ''}
+            </DialogTitle>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mã MH</TableHead>
+                <TableHead>Tên Môn học</TableHead>
+                <TableHead>Số Tín chỉ</TableHead>
+                <TableHead>Học kỳ</TableHead>
+                <TableHead>Điểm trung bình</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {studentCourses.map((g: any) => (
+                <TableRow key={g.id}>
+                  <TableCell className="font-mono text-sm">{g.courses?.course_code}</TableCell>
+                  <TableCell className="font-medium">{g.courses?.course_name}</TableCell>
+                  <TableCell>{g.courses?.credits ?? '—'}</TableCell>
+                  <TableCell>{g.semesters?.name ?? '—'}</TableCell>
+                  <TableCell className="font-bold">{g.average === null || g.average === undefined ? '—' : Number(g.average).toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+              {studentCourses.length === 0 && (
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sinh viên chưa đăng ký môn học nào</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
