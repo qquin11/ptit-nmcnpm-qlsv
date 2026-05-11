@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,27 +9,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Save, X } from 'lucide-react';
 
+const ALL = '__all__';
 const fmt = (n: number | null | undefined): string => (n === null || n === undefined ? '—' : Number(n).toFixed(2));
 
+type GradeField = 'attendance' | 'midterm' | 'final';
+
 interface GradeRow {
+  gradeId: string;
   studentId: string;
   studentCode: string;
   fullName: string;
+  classId: string | null;
   className: string;
+  semesterId: string;
+  semesterName: string;
   attendance: number | null;
   midterm: number | null;
   final: number | null;
   average: number | null;
 }
 
+const clamp = (raw: string): number | null => {
+  if (raw.trim() === '') return null;
+  const n = parseFloat(raw);
+  if (Number.isNaN(n)) return null;
+  if (n > 10) return 10;
+  if (n < 0) return 0;
+  return n;
+};
+
 const TeacherGrades = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
-  const [semesters, setSemesters] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [selectedSemester, setSelectedSemester] = useState<string>('');
-  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [semesterFilter, setSemesterFilter] = useState<string>(ALL);
+  const [classFilter, setClassFilter] = useState<string>(ALL);
   const [rows, setRows] = useState<GradeRow[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -39,92 +53,112 @@ const TeacherGrades = () => {
     const init = async () => {
       const { data: teacher } = await supabase.from('teachers').select('id').eq('user_id', user.id).maybeSingle();
       if (!teacher) return;
-      const [co, se, cl] = await Promise.all([
-        supabase.from('courses').select('id, course_name, course_code').eq('teacher_id', teacher.id),
-        supabase.from('semesters').select('id, name').order('start_date', { ascending: false }),
-        supabase.from('classes').select('id, class_name').order('class_name'),
-      ]);
-      if (co.data) setCourses(co.data);
-      if (se.data) setSemesters(se.data);
-      if (cl.data) setClasses(cl.data);
+      const { data: co } = await supabase.from('courses').select('id, course_name, course_code').eq('teacher_id', teacher.id);
+      if (co) setCourses(co);
     };
     init();
   }, [user]);
 
   useEffect(() => {
-    if (!selectedCourse) { setSelectedSemester(''); setSelectedClass(''); }
-  }, [selectedCourse]);
-
-  useEffect(() => {
-    if (!selectedCourse || !selectedSemester || !selectedClass) {
-      setRows([]);
-      return;
-    }
+    if (!selectedCourse) { setRows([]); setSemesterFilter(ALL); setClassFilter(ALL); return; }
     const load = async () => {
-      const [st, gr] = await Promise.all([
-        supabase.from('students').select('id, student_code, full_name, classes(class_name)').eq('class_id', selectedClass),
-        supabase.from('grades').select('*').eq('course_id', selectedCourse).eq('semester_id', selectedSemester),
-      ]);
-      const gradeByStudent = new Map<string, any>();
-      (gr.data || []).forEach((g: any) => gradeByStudent.set(g.student_id, g));
-      const r: GradeRow[] = (st.data || []).map((s: any) => {
-        const g = gradeByStudent.get(s.id);
-        return {
-          studentId: s.id,
-          studentCode: s.student_code,
-          fullName: s.full_name,
-          className: s.classes?.class_name || '—',
-          attendance: g?.attendance ?? null,
-          midterm: g?.midterm ?? null,
-          final: g?.final ?? null,
-          average: g?.average ?? null,
-        };
-      });
-      setRows(r);
+      const { data } = await supabase
+        .from('grades')
+        .select('id, student_id, semester_id, attendance, midterm, final, average, students(student_code, full_name, class_id, classes(class_name)), semesters(name)')
+        .eq('course_id', selectedCourse);
+      const mapped: GradeRow[] = (data || []).map((g: any) => ({
+        gradeId: g.id,
+        studentId: g.student_id,
+        studentCode: g.students?.student_code ?? '',
+        fullName: g.students?.full_name ?? '',
+        classId: g.students?.class_id ?? null,
+        className: g.students?.classes?.class_name ?? '—',
+        semesterId: g.semester_id,
+        semesterName: g.semesters?.name ?? '—',
+        attendance: g.attendance,
+        midterm: g.midterm,
+        final: g.final,
+        average: g.average,
+      }));
+      setRows(mapped);
+      setDrafts({});
     };
     load();
-  }, [selectedCourse, selectedSemester, selectedClass]);
+  }, [selectedCourse]);
 
-  type GradeField = 'attendance' | 'midterm' | 'final';
-  const draftKey = (studentId: string, field: GradeField) => `${studentId}_${field}`;
+  const semesterOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    rows.forEach(r => { if (r.semesterId) m.set(r.semesterId, r.semesterName); });
+    return Array.from(m, ([id, name]) => ({ id, name }));
+  }, [rows]);
 
-  const handleFocus = (studentId: string, field: GradeField, current: number | null) => {
-    setDrafts(d => ({ ...d, [draftKey(studentId, field)]: current === null ? '' : current.toFixed(2) }));
+  const classOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    rows.forEach(r => { if (r.classId) m.set(r.classId, r.className); });
+    return Array.from(m, ([id, name]) => ({ id, name }));
+  }, [rows]);
+
+  const filteredRows = useMemo(() => rows.filter(r =>
+    (semesterFilter === ALL || r.semesterId === semesterFilter) &&
+    (classFilter === ALL || r.classId === classFilter),
+  ), [rows, semesterFilter, classFilter]);
+
+  const draftKey = (gradeId: string, field: GradeField) => `${gradeId}_${field}`;
+
+  const handleFocus = (gradeId: string, field: GradeField, current: number | null) => {
+    setDrafts(d => ({ ...d, [draftKey(gradeId, field)]: current === null ? '' : current.toFixed(2) }));
   };
 
-  const handleChange = (studentId: string, field: GradeField, value: string) => {
-    setDrafts(d => ({ ...d, [draftKey(studentId, field)]: value }));
+  const handleChange = (gradeId: string, field: GradeField, value: string) => {
+    setDrafts(d => ({ ...d, [draftKey(gradeId, field)]: value }));
   };
 
-  const handleBlur = (studentId: string, field: GradeField) => {
-    const key = draftKey(studentId, field);
-    const raw = drafts[key] ?? '';
-    let num: number | null = raw.trim() === '' ? null : parseFloat(raw);
-    if (num !== null && !Number.isNaN(num)) {
-      if (num > 10) num = 10;
-      if (num < 0) num = 0;
-    } else if (num !== null && Number.isNaN(num)) {
-      num = null;
-    }
-    setRows(rows.map(r => r.studentId === studentId ? { ...r, [field]: num } : r));
-    setDrafts(d => { const n = { ...d }; delete n[key]; return n; });
+  const handleBlur = (gradeId: string, field: GradeField) => {
+    const key = draftKey(gradeId, field);
+    setDrafts(prev => {
+      if (!(key in prev)) return prev;
+      const num = clamp(prev[key]);
+      setRows(rs => rs.map(r => r.gradeId === gradeId ? { ...r, [field]: num } : r));
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
-  const handleSave = async (row: GradeRow) => {
+  const handleSave = async (gradeId: string) => {
+    let saved: GradeRow | undefined;
+    setRows(prev => {
+      const updated = prev.map(r => {
+        if (r.gradeId !== gradeId) return r;
+        const merged = { ...r };
+        (['attendance', 'midterm', 'final'] as GradeField[]).forEach(f => {
+          const k = draftKey(gradeId, f);
+          if (k in drafts) merged[f] = clamp(drafts[k]);
+        });
+        saved = merged;
+        return merged;
+      });
+      return updated;
+    });
+    setDrafts(prev => {
+      const next = { ...prev };
+      (['attendance', 'midterm', 'final'] as GradeField[]).forEach(f => { delete next[draftKey(gradeId, f)]; });
+      return next;
+    });
+    if (!saved) return;
+
     const { data, error } = await supabase.from('grades').upsert({
-      student_id: row.studentId,
+      student_id: saved.studentId,
       course_id: selectedCourse,
-      semester_id: selectedSemester,
-      attendance: row.attendance,
-      midterm: row.midterm,
-      final: row.final,
+      semester_id: saved.semesterId,
+      attendance: saved.attendance,
+      midterm: saved.midterm,
+      final: saved.final,
     }, { onConflict: 'student_id,course_id,semester_id' }).select('average').single();
     if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
-    setRows(rows.map(r => r.studentId === row.studentId ? { ...r, average: data?.average ?? null } : r));
+    setRows(rs => rs.map(r => r.gradeId === gradeId ? { ...r, average: data?.average ?? null } : r));
     toast({ title: 'Đã lưu điểm' });
   };
-
-  const ready = selectedCourse && selectedSemester && selectedClass;
 
   return (
     <div className="page-container">
@@ -138,31 +172,37 @@ const TeacherGrades = () => {
           </Select>
           {selectedCourse && (
             <>
-              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
-                <SelectTrigger><SelectValue placeholder="Chọn học kỳ" /></SelectTrigger>
-                <SelectContent>{semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+              <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+                <SelectTrigger><SelectValue placeholder="Học kỳ" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Tất cả học kỳ</SelectItem>
+                  {semesterOptions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
               </Select>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
-                <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger><SelectValue placeholder="Lớp" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Tất cả lớp</SelectItem>
+                  {classOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
               </Select>
             </>
           )}
         </div>
         {selectedCourse && (
-          <Button variant="ghost" size="icon" onClick={() => { setSelectedCourse(''); setSelectedSemester(''); setSelectedClass(''); }} title="Xóa bộ lọc">
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedCourse(''); setSemesterFilter(ALL); setClassFilter(ALL); }} title="Xóa bộ lọc">
             <X size={16} />
           </Button>
         )}
       </div>
 
-      {!ready && (
+      {!selectedCourse && (
         <Card className="p-8 text-center text-muted-foreground">
           Vui lòng chọn môn học để xem danh sách
         </Card>
       )}
 
-      {ready && (
+      {selectedCourse && (
         <Card>
           <Table>
             <TableHeader>
@@ -170,6 +210,8 @@ const TeacherGrades = () => {
                 <TableHead className="w-12">STT</TableHead>
                 <TableHead>Mã SV</TableHead>
                 <TableHead>Họ tên</TableHead>
+                <TableHead>Lớp</TableHead>
+                <TableHead>Học kỳ</TableHead>
                 <TableHead>Điểm chuyên cần (10%)</TableHead>
                 <TableHead>Giữa kỳ (30%)</TableHead>
                 <TableHead>Cuối kỳ (60%)</TableHead>
@@ -178,40 +220,42 @@ const TeacherGrades = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r, i) => (
-                <TableRow key={r.studentId}>
+              {filteredRows.map((r, i) => (
+                <TableRow key={r.gradeId}>
                   <TableCell>{i + 1}</TableCell>
                   <TableCell className="font-mono text-sm">{r.studentCode}</TableCell>
                   <TableCell className="font-medium">{r.fullName}</TableCell>
+                  <TableCell>{r.className}</TableCell>
+                  <TableCell>{r.semesterName}</TableCell>
                   <TableCell>
                     <Input type="text" inputMode="decimal" className="w-20"
-                      value={drafts[draftKey(r.studentId, 'attendance')] ?? (r.attendance === null ? '' : r.attendance.toFixed(2))}
-                      onFocus={() => handleFocus(r.studentId, 'attendance', r.attendance)}
-                      onChange={(ev) => handleChange(r.studentId, 'attendance', ev.target.value)}
-                      onBlur={() => handleBlur(r.studentId, 'attendance')} />
+                      value={drafts[draftKey(r.gradeId, 'attendance')] ?? (r.attendance === null ? '' : r.attendance.toFixed(2))}
+                      onFocus={() => handleFocus(r.gradeId, 'attendance', r.attendance)}
+                      onChange={(ev) => handleChange(r.gradeId, 'attendance', ev.target.value)}
+                      onBlur={() => handleBlur(r.gradeId, 'attendance')} />
                   </TableCell>
                   <TableCell>
                     <Input type="text" inputMode="decimal" className="w-20"
-                      value={drafts[draftKey(r.studentId, 'midterm')] ?? (r.midterm === null ? '' : r.midterm.toFixed(2))}
-                      onFocus={() => handleFocus(r.studentId, 'midterm', r.midterm)}
-                      onChange={(ev) => handleChange(r.studentId, 'midterm', ev.target.value)}
-                      onBlur={() => handleBlur(r.studentId, 'midterm')} />
+                      value={drafts[draftKey(r.gradeId, 'midterm')] ?? (r.midterm === null ? '' : r.midterm.toFixed(2))}
+                      onFocus={() => handleFocus(r.gradeId, 'midterm', r.midterm)}
+                      onChange={(ev) => handleChange(r.gradeId, 'midterm', ev.target.value)}
+                      onBlur={() => handleBlur(r.gradeId, 'midterm')} />
                   </TableCell>
                   <TableCell>
                     <Input type="text" inputMode="decimal" className="w-20"
-                      value={drafts[draftKey(r.studentId, 'final')] ?? (r.final === null ? '' : r.final.toFixed(2))}
-                      onFocus={() => handleFocus(r.studentId, 'final', r.final)}
-                      onChange={(ev) => handleChange(r.studentId, 'final', ev.target.value)}
-                      onBlur={() => handleBlur(r.studentId, 'final')} />
+                      value={drafts[draftKey(r.gradeId, 'final')] ?? (r.final === null ? '' : r.final.toFixed(2))}
+                      onFocus={() => handleFocus(r.gradeId, 'final', r.final)}
+                      onChange={(ev) => handleChange(r.gradeId, 'final', ev.target.value)}
+                      onBlur={() => handleBlur(r.gradeId, 'final')} />
                   </TableCell>
                   <TableCell className="font-bold">{fmt(r.average)}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleSave(r)}><Save size={14} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleSave(r.gradeId)}><Save size={14} /></Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {rows.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Chưa có sinh viên</TableCell></TableRow>
+              {filteredRows.length === 0 && (
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Chưa có sinh viên</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
