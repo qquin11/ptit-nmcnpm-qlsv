@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Search } from 'lucide-react';
+import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const ManageSemesters = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
@@ -51,7 +52,12 @@ const ManageSemesters = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa học kỳ này?')) return;
+    const { data: gradeRows } = await supabase.from('grades').select('course_id').eq('semester_id', id);
+    const courseCount = new Set((gradeRows || []).map((g: any) => g.course_id)).size;
+    if (courseCount > 0) {
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Học kỳ này đã có ${courseCount} môn học. Vui lòng xóa các bản ghi liên quan trước.` });
+      return;
+    }
     await supabase.from('semesters').delete().eq('id', id);
     toast({ title: 'Đã xóa học kỳ' });
     fetchData();
@@ -101,7 +107,7 @@ const ManageSemesters = () => {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(s)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                    <ConfirmDeleteButton onConfirm={() => handleDelete(s.id)} description={`Bạn có chắc muốn xóa học kỳ "${s.name}"? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
               </TableRow>

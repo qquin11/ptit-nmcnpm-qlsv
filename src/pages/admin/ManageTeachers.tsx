@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Search } from 'lucide-react';
+import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 interface Teacher {
   id: string;
@@ -56,6 +57,12 @@ const ManageTeachers = () => {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã giảng viên và họ tên là bắt buộc' });
       return;
     }
+    const code = form.teacher_code.trim();
+    const dupCode = await supabase.from('teachers').select('id').eq('teacher_code', code).maybeSingle();
+    if (dupCode.data && dupCode.data.id !== editing?.id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã giảng viên đã tồn tại' });
+      return;
+    }
     if (editing) {
       const { error } = await supabase.from('teachers').update({
         teacher_code: form.teacher_code.trim(),
@@ -68,6 +75,12 @@ const ManageTeachers = () => {
     } else {
       if (!form.email.trim() || !form.password.trim()) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
+        return;
+      }
+      const email = form.email.trim();
+      const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
+      if (dupEmail.data) {
+        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
         return;
       }
       const tempClient = createClient(
@@ -107,7 +120,19 @@ const ManageTeachers = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa giảng viên này?')) return;
+    const [coursesCount, classesCount] = await Promise.all([
+      supabase.from('courses').select('id', { count: 'exact', head: true }).eq('teacher_id', id),
+      supabase.from('classes').select('id', { count: 'exact', head: true }).eq('homeroom_teacher_id', id),
+    ]);
+    const cc = coursesCount.count ?? 0;
+    const cl = classesCount.count ?? 0;
+    if (cc > 0 || cl > 0) {
+      const parts: string[] = [];
+      if (cc > 0) parts.push(`${cc} môn học`);
+      if (cl > 0) parts.push(`${cl} lớp chủ nhiệm`);
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Giảng viên đang được gán cho ${parts.join(' và ')}. Vui lòng gỡ liên kết trước.` });
+      return;
+    }
     await supabase.from('teachers').delete().eq('id', id);
     toast({ title: 'Đã xóa giảng viên' });
     fetch();
@@ -170,7 +195,7 @@ const ManageTeachers = () => {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(t)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                    <ConfirmDeleteButton onConfirm={() => handleDelete(t.id)} description={`Bạn có chắc muốn xóa giảng viên "${t.full_name}" (${t.teacher_code})? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
               </TableRow>

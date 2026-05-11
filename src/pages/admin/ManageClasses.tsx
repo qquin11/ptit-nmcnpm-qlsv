@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Search } from 'lucide-react';
+import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const ManageClasses = () => {
   const [classes, setClasses] = useState<any[]>([]);
@@ -39,14 +40,20 @@ const ManageClasses = () => {
   };
 
   const handleSave = async () => {
-    if (!form.class_name.trim()) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Tên lớp là bắt buộc' });
+    if (!form.class_name.trim() || !form.major.trim() || !form.homeroom_teacher_id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
+      return;
+    }
+    const name = form.class_name.trim();
+    const dup = await supabase.from('classes').select('id').eq('class_name', name).maybeSingle();
+    if (dup.data && dup.data.id !== editing?.id) {
+      toast({ variant: 'destructive', title: 'Lỗi', description: 'Tên lớp đã tồn tại' });
       return;
     }
     const payload = {
-      class_name: form.class_name.trim(),
-      major: form.major.trim() || null,
-      homeroom_teacher_id: form.homeroom_teacher_id || null,
+      class_name: name,
+      major: form.major.trim(),
+      homeroom_teacher_id: form.homeroom_teacher_id,
     };
 
     if (editing) {
@@ -64,7 +71,11 @@ const ManageClasses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa lớp này?')) return;
+    const { count } = await supabase.from('students').select('id', { count: 'exact', head: true }).eq('class_id', id);
+    if ((count ?? 0) > 0) {
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Lớp này đang có ${count} sinh viên. Vui lòng chuyển sinh viên sang lớp khác trước.` });
+      return;
+    }
     await supabase.from('classes').delete().eq('id', id);
     toast({ title: 'Đã xóa lớp' });
     fetchData();
@@ -80,9 +91,9 @@ const ManageClasses = () => {
             <DialogHeader><DialogTitle>{editing ? 'Sửa Lớp' : 'Thêm Lớp'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div><Label required>Tên Lớp</Label><Input placeholder="VD: D20CN01" value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
-              <div><Label>Chuyên ngành</Label><Input value={form.major} onChange={e => setForm({ ...form, major: e.target.value })} /></div>
+              <div><Label required>Chuyên ngành</Label><Input value={form.major} onChange={e => setForm({ ...form, major: e.target.value })} /></div>
               <div>
-                <Label>Giáo viên chủ nhiệm</Label>
+                <Label required>Giáo viên chủ nhiệm</Label>
                 <Select value={form.homeroom_teacher_id} onValueChange={v => setForm({ ...form, homeroom_teacher_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Chọn giáo viên chủ nhiệm" /></SelectTrigger>
                   <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
@@ -121,7 +132,7 @@ const ManageClasses = () => {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)}><Trash2 size={14} className="text-destructive" /></Button>
+                    <ConfirmDeleteButton onConfirm={() => handleDelete(c.id)} description={`Bạn có chắc muốn xóa lớp "${c.class_name}"? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
               </TableRow>
