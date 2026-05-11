@@ -13,6 +13,7 @@ const StudentGrades = () => {
   const { user } = useAuth();
   const [grades, setGrades] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>(ALL);
+  const [selectedCourse, setSelectedCourse] = useState<string>(ALL);
 
   useEffect(() => {
     if (!user) return;
@@ -37,10 +38,20 @@ const StudentGrades = () => {
     return Array.from(map.values()).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
   }, [grades]);
 
+  const courseOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    grades.forEach((g) => {
+      const c = g.courses as any;
+      if (g.course_id && c?.course_name && !map.has(g.course_id)) map.set(g.course_id, c.course_name);
+    });
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [grades]);
+
   const groups = useMemo(() => {
-    const filtered = selectedSemester === ALL
-      ? grades
-      : grades.filter((g) => (g.semesters as any)?.id === selectedSemester);
+    const filtered = grades.filter((g) =>
+      (selectedSemester === ALL || (g.semesters as any)?.id === selectedSemester) &&
+      (selectedCourse === ALL || g.course_id === selectedCourse),
+    );
     const map = new Map<string, { id: string; name: string; start_date: string; rows: any[] }>();
     filtered.forEach((g) => {
       const s = g.semesters as any;
@@ -51,7 +62,7 @@ const StudentGrades = () => {
       map.get(key)!.rows.push(g);
     });
     return Array.from(map.values()).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
-  }, [grades, selectedSemester]);
+  }, [grades, selectedSemester, selectedCourse]);
 
   return (
     <div className="page-container">
@@ -64,6 +75,15 @@ const StudentGrades = () => {
             <SelectItem value={ALL}>Tất cả học kỳ</SelectItem>
             {semesterOptions.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+          <SelectTrigger><SelectValue placeholder="Chọn môn học" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Tất cả môn học</SelectItem>
+            {courseOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -81,7 +101,12 @@ const StudentGrades = () => {
 
       {groups.length > 0 && (
         <div className="max-h-[70vh] overflow-y-auto space-y-4 pr-1">
-      {groups.map((group) => (
+      {groups.map((group) => {
+        const scored = group.rows.filter((g: any) => g.average !== null && g.average !== undefined);
+        const semesterAverage = scored.length > 0
+          ? scored.reduce((sum: number, g: any) => sum + Number(g.average), 0) / scored.length
+          : null;
+        return (
         <Card key={group.id}>
           <div className="px-4 pt-4 font-semibold">{group.name}</div>
           <Table>
@@ -110,10 +135,15 @@ const StudentGrades = () => {
                   <TableCell className="font-bold">{fmt(g.average)}</TableCell>
                 </TableRow>
               ))}
+              <TableRow>
+                <TableCell colSpan={7} className="text-right font-semibold">Điểm tổng kết học kỳ</TableCell>
+                <TableCell className="font-bold">{fmt(semesterAverage)}</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </Card>
-      ))}
+        );
+      })}
         </div>
       )}
     </div>
