@@ -22,7 +22,7 @@ const TeacherDashboard = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Bảng điều khiển Giảng viên</h1>
+      <h1 className="dashboard-header">Tổng quan</h1>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="stat-card">
           <div className="flex items-center gap-3">
