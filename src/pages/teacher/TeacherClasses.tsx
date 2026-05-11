@@ -98,21 +98,21 @@ const TeacherClasses = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Môn học của tôi & Sinh viên</h1>
+      <h1 className="dashboard-header">Danh sách môn học và sinh viên</h1>
 
       <div className="grid gap-3 sm:grid-cols-3 max-w-3xl">
-        <Select value={courseFilter} onValueChange={setCourseFilter}>
-          <SelectTrigger><SelectValue placeholder="Môn học" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả môn học</SelectItem>
-            {courseOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <Select value={semesterFilter} onValueChange={setSemesterFilter}>
           <SelectTrigger><SelectValue placeholder="Học kỳ" /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Tất cả học kỳ</SelectItem>
             {semesterOptions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <SelectTrigger><SelectValue placeholder="Môn học" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Tất cả môn học</SelectItem>
+            {courseOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={classFilter} onValueChange={setClassFilter}>

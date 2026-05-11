@@ -18,7 +18,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="page-container">
-      <h1 className="dashboard-header">Bảng điều khiển</h1>
+      <h1 className="dashboard-header">Tổng quan</h1>
 
       {profile && (
         <Card>
