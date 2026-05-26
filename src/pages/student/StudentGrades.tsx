@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,7 +27,7 @@ const StudentGrades = () => {
         .eq('student_id', student.id);
       if (data) setGrades(data);
     };
-    fetch();
+    fetch().finally(() => setLoading(false));
   }, [user]);
 
   const semesterOptions = useMemo(() => {
@@ -63,6 +64,8 @@ const StudentGrades = () => {
     });
     return Array.from(map.values()).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
   }, [grades, selectedSemester, selectedCourse]);
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

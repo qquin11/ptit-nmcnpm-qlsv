@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap, Users, BookOpen, School } from 'lucide-react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -10,6 +11,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({ students: 0, teachers: 0, courses: 0, classes: 0 });
   const [deptData, setDeptData] = useState<{ name: string; value: number }[]>([]);
   const [teacherDeptData, setTeacherDeptData] = useState<{ name: string; value: number }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,7 +50,7 @@ const AdminDashboard = () => {
         setTeacherDeptData(Object.entries(depts).map(([name, value]) => ({ name, value })));
       }
     };
-    fetchStats();
+    fetchStats().finally(() => setLoading(false));
   }, []);
 
   const statCards = [
@@ -57,6 +59,8 @@ const AdminDashboard = () => {
     { label: 'Tổng Môn học', value: stats.courses, icon: <BookOpen size={24} />, color: 'text-warning' },
     { label: 'Tổng Lớp học', value: stats.classes, icon: <School size={24} />, color: 'text-info' },
   ];
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

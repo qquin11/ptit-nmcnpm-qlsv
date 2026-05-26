@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ const TeacherGrades = () => {
   const [classFilter, setClassFilter] = useState<string>(ALL);
   const [rows, setRows] = useState<GradeRow[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,7 +58,7 @@ const TeacherGrades = () => {
       const { data: co } = await supabase.from('courses').select('id, course_name, course_code').eq('teacher_id', teacher.id);
       if (co) setCourses(co);
     };
-    init();
+    init().finally(() => setLoading(false));
   }, [user]);
 
   useEffect(() => {
@@ -159,6 +161,8 @@ const TeacherGrades = () => {
     setRows(rs => rs.map(r => r.gradeId === gradeId ? { ...r, average: data?.average ?? null } : r));
     toast({ title: 'Đã lưu điểm' });
   };
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

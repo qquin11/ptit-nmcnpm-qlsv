@@ -62,7 +62,7 @@ const RoleRedirect = () => {
   if (role) return <Navigate to={`/${role}`} replace />;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <p className="text-muted-foreground">{t('login.noRole')}</p>
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
 };

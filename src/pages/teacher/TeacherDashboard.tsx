@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +9,7 @@ import { BookOpen } from 'lucide-react';
 const TeacherDashboard = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -17,8 +19,10 @@ const TeacherDashboard = () => {
       const { data } = await supabase.from('courses').select('*').eq('teacher_id', teacher.id);
       if (data) setCourses(data);
     };
-    fetchData();
+    fetchData().finally(() => setLoading(false));
   }, [user]);
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">
