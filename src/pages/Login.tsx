@@ -52,7 +52,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                maxLength={255}
+                maxLength={40}
               />
             </div>
             <div className="space-y-2">
@@ -64,7 +64,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                maxLength={128}
+                maxLength={32}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

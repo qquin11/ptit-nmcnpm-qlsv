@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,14 +13,41 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Search } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
+const semesterFormSchema = z.object({
+  name: z.string().min(1, 'Tên học kỳ không được trống').max(40, 'Tên học kỳ tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Tên học kỳ chỉ chứa chữ, số và khoảng trắng'),
+  start_date: z.string().min(1, 'Ngày bắt đầu không được trống'),
+  end_date: z.string().min(1, 'Ngày kết thúc không được trống'),
+}).superRefine((data, ctx) => {
+  if (data.start_date && data.end_date) {
+    if (data.start_date >= data.end_date) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_date'], message: 'Ngày kết thúc phải sau ngày bắt đầu' });
+    }
+    const today = new Date().toISOString().split('T')[0];
+    if (data.start_date > today) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['start_date'], message: 'Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày hiện tại' });
+    }
+    if (data.end_date < today) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_date'], message: 'Ngày kết thúc phải lớn hơn hoặc bằng ngày hiện tại' });
+    }
+  }
+});
+
+type SemesterFormData = z.infer<typeof semesterFormSchema>;
+
+const defaultFormValues: SemesterFormData = { name: '', start_date: '', end_date: '' };
+
 const ManageSemesters = () => {
   const [semesters, setSemesters] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', start_date: '', end_date: '' });
   const { toast } = useToast();
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<SemesterFormData>({
+    resolver: zodResolver(semesterFormSchema),
+    defaultValues: defaultFormValues,
+  });
 
   const fetchData = async () => {
     const { data } = await supabase.from('semesters').select('*').order('start_date', { ascending: false });
@@ -26,20 +56,16 @@ const ManageSemesters = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const resetForm = () => { setForm({ name: '', start_date: '', end_date: '' }); setEditing(null); };
+  const resetForm = () => { reset(defaultFormValues); setEditing(null); };
 
   const handleEdit = (s: any) => {
     setEditing(s);
-    setForm({ name: s.name, start_date: s.start_date, end_date: s.end_date });
+    reset({ name: s.name, start_date: s.start_date, end_date: s.end_date });
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.name.trim() || !form.start_date || !form.end_date) {
-      toast({ variant: 'destructive', title: 'Vui lòng điền đầy đủ thông tin' });
-      return;
-    }
-    const payload = { name: form.name.trim(), start_date: form.start_date, end_date: form.end_date };
+  const onSubmit = async (data: SemesterFormData) => {
+    const payload = { name: data.name.trim(), start_date: data.start_date, end_date: data.end_date };
     if (editing) {
       await supabase.from('semesters').update(payload).eq('id', editing.id);
       toast({ title: 'Cập nhật học kỳ thành công' });
@@ -73,10 +99,22 @@ const ManageSemesters = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa' : 'Thêm'} Học kỳ</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label required>Tên Học kỳ</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="HK1 2025-2026" /></div>
-              <div><Label required>Ngày bắt đầu</Label><Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
-              <div><Label required>Ngày kết thúc</Label><Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+              <div>
+                <Label required>Tên Học kỳ</Label>
+                <Input placeholder="HK1 2025-2026" {...register('name')} />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
+              </div>
+              <div>
+                <Label required>Ngày bắt đầu</Label>
+                <Input type="date" {...register('start_date')} />
+                {errors.start_date && <p className="text-sm text-red-500 mt-1">{errors.start_date.message}</p>}
+              </div>
+              <div>
+                <Label required>Ngày kết thúc</Label>
+                <Input type="date" {...register('end_date')} />
+                {errors.end_date && <p className="text-sm text-red-500 mt-1">{errors.end_date.message}</p>}
+              </div>
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>

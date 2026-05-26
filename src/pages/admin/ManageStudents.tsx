@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +14,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Search, BookOpen } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
+
+const studentFormSchema = z.object({
+  email: z.string().default(''),
+  password: z.string().default(''),
+  student_code: z.string().min(1, 'Mã sinh viên không được trống').regex(/^[a-zA-Z0-9]+$/, 'Mã sinh viên chỉ chứa chữ và số'),
+  full_name: z.string().min(1, 'Họ tên không được trống').regex(/^[\p{L}\s]+$/u, 'Họ tên chỉ chứa chữ cái'),
+  dob: z.string().min(1, 'Ngày sinh không được trống').regex(/^\d{4}-\d{2}-\d{2}$/, 'Ngày sinh không hợp lệ'),
+  gender: z.string().min(1, 'Vui lòng chọn giới tính').refine(val => ['M', 'F'].includes(val), 'Giới tính không hợp lệ'),
+  department: z.string().min(1, 'Chuyên ngành không được trống'),
+  class_id: z.string().min(1, 'Vui lòng chọn lớp'),
+  phone: z.string().refine(val => val === '' || /^\d{10}$/.test(val), { message: 'SĐT phải gồm đúng 10 chữ số' }),
+  address: z.string().default(''),
+  status: z.string().default('active'),
+  _isEditing: z.boolean(),
+}).superRefine((data, ctx) => {
+  if (!data._isEditing) {
+    if (!data.email.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'Email không được trống' });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'Email không hợp lệ' });
+    }
+    if (!data.password.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu không được trống' });
+    } else {
+      if (data.password.trim().length < 8) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu phải có ít nhất 8 ký tự' });
+      }
+      if (data.password.trim().length > 32) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu tối đa 32 ký tự' });
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(data.password.trim())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu chỉ chứa chữ và số' });
+      }
+    }
+  }
+});
+
+type StudentFormData = z.infer<typeof studentFormSchema>;
 
 interface Student {
   id: string;
@@ -28,6 +69,12 @@ interface Student {
   status: string | null;
 }
 
+const defaultFormValues: StudentFormData = {
+  email: '', password: '', student_code: '', full_name: '', dob: '',
+  gender: '', department: '', class_id: '', phone: '', address: '', status: 'active',
+  _isEditing: false,
+};
+
 const ManageStudents = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -36,11 +83,15 @@ const ManageStudents = () => {
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
-  const [form, setForm] = useState({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
   const [coursesDialogStudent, setCoursesDialogStudent] = useState<Student | null>(null);
   const [viewing, setViewing] = useState<Student | null>(null);
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
   const { toast } = useToast();
+
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<StudentFormData>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: defaultFormValues,
+  });
 
   const fetchStudents = async () => {
     const [st, cl] = await Promise.all([
@@ -62,23 +113,31 @@ const ManageStudents = () => {
   useEffect(() => { fetchStudents(); }, []);
 
   const resetForm = () => {
-    setForm({ student_code: '', full_name: '', dob: '', department: '', phone: '', class_id: '', email: '', password: '', gender: '', address: '', status: 'active' });
+    reset(defaultFormValues);
     setEditing(null);
   };
 
   const handleEdit = (s: Student) => {
     setEditing(s);
-    setForm({ student_code: s.student_code, full_name: s.full_name, dob: s.dob || '', department: s.department || '', phone: s.phone || '', class_id: s.class_id || '', email: '', password: '', gender: s.gender || '', address: s.address || '', status: s.status || 'active' });
+    reset({
+      student_code: s.student_code,
+      full_name: s.full_name,
+      dob: s.dob || '',
+      department: s.department || '',
+      phone: s.phone || '',
+      class_id: s.class_id || '',
+      email: '',
+      password: '',
+      gender: s.gender || '',
+      address: s.address || '',
+      status: s.status || 'active',
+      _isEditing: true,
+    });
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.student_code.trim() || !form.full_name.trim() || !form.dob || !form.gender || !form.department.trim() || !form.class_id) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
-      return;
-    }
-
-    const code = form.student_code.trim();
+  const onSubmit = async (data: StudentFormData) => {
+    const code = data.student_code.trim();
     const dupCode = await supabase.from('students').select('id').eq('student_code', code).maybeSingle();
     if (dupCode.data && dupCode.data.id !== editing?.id) {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã sinh viên đã tồn tại' });
@@ -87,38 +146,33 @@ const ManageStudents = () => {
 
     if (editing) {
       const { error } = await supabase.from('students').update({
-        student_code: form.student_code.trim(),
-        full_name: form.full_name.trim(),
-        dob: form.dob || null,
-        department: form.department.trim() || null,
-        phone: form.phone.trim() || null,
-        class_id: form.class_id || null,
-        gender: form.gender || null,
-        address: form.address.trim() || null,
-        status: form.status || 'active',
+        student_code: data.student_code.trim(),
+        full_name: data.full_name.trim(),
+        dob: data.dob || null,
+        department: data.department.trim() || null,
+        phone: data.phone.trim() || null,
+        class_id: data.class_id || null,
+        gender: data.gender || null,
+        address: data.address.trim() || null,
+        status: data.status || 'active',
       }).eq('id', editing.id);
       if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
       toast({ title: 'Cập nhật sinh viên thành công' });
     } else {
-      if (!form.email.trim() || !form.password.trim()) {
-        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
-        return;
-      }
-      const email = form.email.trim();
+      const email = data.email.trim();
       const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
       if (dupEmail.data) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
         return;
       }
-      // Use a temporary client (no session persistence) so admin stays logged in
       const tempClient = createClient(
         import.meta.env.VITE_SUPABASE_URL,
         import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         { auth: { persistSession: false, autoRefreshToken: false } }
       );
       const { data: authData, error: authError } = await tempClient.auth.signUp({
-        email: form.email.trim(),
-        password: form.password.trim(),
+        email: data.email.trim(),
+        password: data.password.trim(),
       });
       if (authError || !authData.user) {
         toast({ variant: 'destructive', title: 'Lỗi tạo tài khoản', description: authError?.message || 'Không tạo được tài khoản' });
@@ -128,15 +182,15 @@ const ManageStudents = () => {
       const [studentRes, roleRes] = await Promise.all([
         supabase.from('students').insert({
           user_id: userId,
-          student_code: form.student_code.trim(),
-          full_name: form.full_name.trim(),
-          dob: form.dob || null,
-          department: form.department.trim() || null,
-          phone: form.phone.trim() || null,
-          class_id: form.class_id || null,
-          gender: form.gender || null,
-          address: form.address.trim() || null,
-          status: form.status || 'active',
+          student_code: data.student_code.trim(),
+          full_name: data.full_name.trim(),
+          dob: data.dob || null,
+          department: data.department.trim() || null,
+          phone: data.phone.trim() || null,
+          class_id: data.class_id || null,
+          gender: data.gender || null,
+          address: data.address.trim() || null,
+          status: data.status || 'active',
         }),
         supabase.from('user_roles').insert({ user_id: userId, role: 'student' }),
       ]);
@@ -217,46 +271,97 @@ const ManageStudents = () => {
             <div className="space-y-3">
               {!editing && (
                 <>
-                  <div><Label required>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label required>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <div>
+                    <Label required>Email</Label>
+                    <Input {...register('email')} />
+                    {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
+                  </div>
+                  <div>
+                    <Label required>Mật khẩu</Label>
+                    <Input type="password" {...register('password')} />
+                    {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
+                  </div>
                 </>
               )}
-              <div><Label required>Mã Sinh viên</Label><Input value={form.student_code} onChange={e => setForm({ ...form, student_code: e.target.value })} /></div>
-              <div><Label required>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
-              <div><Label required>Ngày sinh</Label><Input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} /></div>
+              <div>
+                <Label required>Mã Sinh viên</Label>
+                <Input {...register('student_code')} />
+                {errors.student_code && <p className="text-sm text-red-500 mt-1">{errors.student_code.message}</p>}
+              </div>
+              <div>
+                <Label required>Họ tên</Label>
+                <Input {...register('full_name')} />
+                {errors.full_name && <p className="text-sm text-red-500 mt-1">{errors.full_name.message}</p>}
+              </div>
+              <div>
+                <Label required>Ngày sinh</Label>
+                <Input type="date" {...register('dob')} />
+                {errors.dob && <p className="text-sm text-red-500 mt-1">{errors.dob.message}</p>}
+              </div>
               <div>
                 <Label required>Giới tính</Label>
-                <Select value={form.gender} onValueChange={v => setForm({ ...form, gender: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn giới tính" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M">Nam</SelectItem>
-                    <SelectItem value="F">Nữ</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="gender"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn giới tính" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Nam</SelectItem>
+                        <SelectItem value="F">Nữ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.gender && <p className="text-sm text-red-500 mt-1">{errors.gender.message}</p>}
               </div>
-              <div><Label required>Chuyên Ngành</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div>
+                <Label required>Chuyên Ngành</Label>
+                <Input {...register('department')} />
+                {errors.department && <p className="text-sm text-red-500 mt-1">{errors.department.message}</p>}
+              </div>
               <div>
                 <Label required>Lớp</Label>
-                <Select value={form.class_id} onValueChange={v => setForm({ ...form, class_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
-                  <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="class_id"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn lớp" /></SelectTrigger>
+                      <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.class_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.class_id && <p className="text-sm text-red-500 mt-1">{errors.class_id.message}</p>}
               </div>
-              <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-              <div><Label>Địa chỉ</Label><Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+              <div>
+                <Label>Điện thoại</Label>
+                <Input {...register('phone')} />
+                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>}
+              </div>
+              <div>
+                <Label>Địa chỉ</Label>
+                <Input {...register('address')} />
+              </div>
               <div>
                 <Label>Trạng thái</Label>
-                <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Đang học</SelectItem>
-                    <SelectItem value="interrupted">Bảo lưu</SelectItem>
-                    <SelectItem value="terminated">Thôi học</SelectItem>
-                    <SelectItem value="graduated">Đã tốt nghiệp</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Đang học</SelectItem>
+                        <SelectItem value="interrupted">Bảo lưu</SelectItem>
+                        <SelectItem value="terminated">Thôi học</SelectItem>
+                        <SelectItem value="graduated">Đã tốt nghiệp</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
