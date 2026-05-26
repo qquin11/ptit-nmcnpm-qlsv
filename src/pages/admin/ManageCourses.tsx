@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +15,18 @@ import { Plus, Pencil, Search, UserPlus } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
+const courseFormSchema = z.object({
+  course_code: z.string().min(1, 'Mã môn học không được trống').length(10, 'Mã môn học phải đúng 10 ký tự').regex(/^[a-zA-Z0-9]+$/, 'Mã môn học chỉ chứa chữ và số'),
+  course_name: z.string().min(1, 'Tên môn học không được trống').max(40, 'Tên môn học tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Tên môn học chỉ chứa chữ, số và khoảng trắng'),
+  credits: z.string().min(1, 'Số tín chỉ không được trống').regex(/^\d$/, 'Số tín chỉ phải là 1 chữ số'),
+  department: z.string().min(1, 'Khoa không được trống'),
+  teacher_id: z.string().min(1, 'Vui lòng chọn giảng viên'),
+});
+
+type CourseFormData = z.infer<typeof courseFormSchema>;
+
+const defaultFormValues: CourseFormData = { course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' };
+
 const ManageCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -20,7 +35,6 @@ const ManageCourses = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
-  const [form, setForm] = useState({ course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' });
   const [addStudentsCourse, setAddStudentsCourse] = useState<any>(null);
   const [semesters, setSemesters] = useState<any[]>([]);
   const [addSemesterId, setAddSemesterId] = useState<string>('');
@@ -28,6 +42,11 @@ const ManageCourses = () => {
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [studentSearch, setStudentSearch] = useState('');
   const { toast } = useToast();
+
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<CourseFormData>({
+    resolver: zodResolver(courseFormSchema),
+    defaultValues: defaultFormValues,
+  });
 
   const fetchData = async () => {
     const [co, te] = await Promise.all([
@@ -40,20 +59,16 @@ const ManageCourses = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const resetForm = () => { setForm({ course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' }); setEditing(null); };
+  const resetForm = () => { reset(defaultFormValues); setEditing(null); };
 
   const handleEdit = (c: any) => {
     setEditing(c);
-    setForm({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '', teacher_id: c.teacher_id || '' });
+    reset({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '', teacher_id: c.teacher_id || '' });
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.course_code.trim() || !form.course_name.trim() || !form.credits.trim() || !form.department.trim() || !form.teacher_id) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
-      return;
-    }
-    const code = form.course_code.trim();
+  const onSubmit = async (data: CourseFormData) => {
+    const code = data.course_code.trim();
     const dup = await supabase.from('courses').select('id').eq('course_code', code).maybeSingle();
     if (dup.data && dup.data.id !== editing?.id) {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã môn học đã tồn tại' });
@@ -61,10 +76,10 @@ const ManageCourses = () => {
     }
     const payload = {
       course_code: code,
-      course_name: form.course_name.trim(),
-      credits: parseInt(form.credits) || 3,
-      department: form.department.trim(),
-      teacher_id: form.teacher_id,
+      course_name: data.course_name.trim(),
+      credits: parseInt(data.credits) || 3,
+      department: data.department.trim(),
+      teacher_id: data.teacher_id,
     };
 
     if (editing) {
@@ -147,18 +162,41 @@ const ManageCourses = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa Môn học' : 'Thêm Môn học'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label required>Mã Môn học</Label><Input value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })} /></div>
-              <div><Label required>Tên Môn học</Label><Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} /></div>
-              <div><Label required>Số tín chỉ</Label><Input type="number" value={form.credits} onChange={e => setForm({ ...form, credits: e.target.value })} /></div>
-              <div><Label required>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
+              <div>
+                <Label required>Mã Môn học</Label>
+                <Input {...register('course_code')} />
+                {errors.course_code && <p className="text-sm text-red-500 mt-1">{errors.course_code.message}</p>}
+              </div>
+              <div>
+                <Label required>Tên Môn học</Label>
+                <Input {...register('course_name')} />
+                {errors.course_name && <p className="text-sm text-red-500 mt-1">{errors.course_name.message}</p>}
+              </div>
+              <div>
+                <Label required>Số tín chỉ</Label>
+                <Input type="number" {...register('credits')} />
+                {errors.credits && <p className="text-sm text-red-500 mt-1">{errors.credits.message}</p>}
+              </div>
+              <div>
+                <Label required>Khoa</Label>
+                <Input {...register('department')} />
+                {errors.department && <p className="text-sm text-red-500 mt-1">{errors.department.message}</p>}
+              </div>
               <div>
                 <Label required>Giảng viên</Label>
-                <Select value={form.teacher_id} onValueChange={v => setForm({ ...form, teacher_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn giảng viên" /></SelectTrigger>
-                  <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="teacher_id"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn giảng viên" /></SelectTrigger>
+                      <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.teacher_id && <p className="text-sm text-red-500 mt-1">{errors.teacher_id.message}</p>}
               </div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>

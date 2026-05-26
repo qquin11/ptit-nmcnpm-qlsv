@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +15,39 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Search } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
+const teacherFormSchema = z.object({
+  email: z.string().default(''),
+  password: z.string().default(''),
+  teacher_code: z.string().min(1, 'Mã giảng viên không được trống').regex(/^[a-zA-Z0-9]+$/, 'Mã giảng viên chỉ chứa chữ và số'),
+  full_name: z.string().min(1, 'Họ tên không được trống').regex(/^[\p{L}\s]+$/u, 'Họ tên chỉ chứa chữ cái'),
+  department: z.string().default(''),
+  phone: z.string().refine(val => val === '' || /^\d{10}$/.test(val), { message: 'SĐT phải gồm đúng 10 chữ số' }),
+  _isEditing: z.boolean(),
+}).superRefine((data, ctx) => {
+  if (!data._isEditing) {
+    if (!data.email.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'Email không được trống' });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'Email không hợp lệ' });
+    }
+    if (!data.password.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu không được trống' });
+    } else {
+      if (data.password.trim().length < 8) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu phải có ít nhất 8 ký tự' });
+      }
+      if (data.password.trim().length > 32) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu tối đa 32 ký tự' });
+      }
+      if (!/^[a-zA-Z0-9]+$/.test(data.password.trim())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['password'], message: 'Mật khẩu chỉ chứa chữ và số' });
+      }
+    }
+  }
+});
+
+type TeacherFormData = z.infer<typeof teacherFormSchema>;
+
 interface Teacher {
   id: string;
   teacher_code: string;
@@ -22,6 +58,11 @@ interface Teacher {
   email?: string | null;
 }
 
+const defaultFormValues: TeacherFormData = {
+  email: '', password: '', teacher_code: '', full_name: '', department: '', phone: '',
+  _isEditing: false,
+};
+
 const ManageTeachers = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [search, setSearch] = useState('');
@@ -29,10 +70,14 @@ const ManageTeachers = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Teacher | null>(null);
   const [viewing, setViewing] = useState<Teacher | null>(null);
-  const [form, setForm] = useState({ teacher_code: '', full_name: '', department: '', phone: '', email: '', password: '' });
   const { toast } = useToast();
 
-  const fetch = async () => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<TeacherFormData>({
+    resolver: zodResolver(teacherFormSchema),
+    defaultValues: defaultFormValues,
+  });
+
+  const fetchTeachers = async () => {
     const { data } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
     if (data) {
       const userIds = data.map((t: any) => t.user_id).filter(Boolean);
@@ -45,42 +90,46 @@ const ManageTeachers = () => {
     }
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetchTeachers(); }, []);
 
-  const resetForm = () => { setForm({ teacher_code: '', full_name: '', department: '', phone: '', email: '', password: '' }); setEditing(null); };
+  const resetForm = () => {
+    reset(defaultFormValues);
+    setEditing(null);
+  };
 
   const handleEdit = (t: Teacher) => {
     setEditing(t);
-    setForm({ teacher_code: t.teacher_code, full_name: t.full_name, department: t.department || '', phone: t.phone || '', email: '', password: '' });
+    reset({
+      teacher_code: t.teacher_code,
+      full_name: t.full_name,
+      department: t.department || '',
+      phone: t.phone || '',
+      email: '',
+      password: '',
+      _isEditing: true,
+    });
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.teacher_code.trim() || !form.full_name.trim()) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã giảng viên và họ tên là bắt buộc' });
-      return;
-    }
-    const code = form.teacher_code.trim();
+  const onSubmit = async (data: TeacherFormData) => {
+    const code = data.teacher_code.trim();
     const dupCode = await supabase.from('teachers').select('id').eq('teacher_code', code).maybeSingle();
     if (dupCode.data && dupCode.data.id !== editing?.id) {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Mã giảng viên đã tồn tại' });
       return;
     }
+
     if (editing) {
       const { error } = await supabase.from('teachers').update({
-        teacher_code: form.teacher_code.trim(),
-        full_name: form.full_name.trim(),
-        department: form.department.trim() || null,
-        phone: form.phone.trim() || null,
+        teacher_code: data.teacher_code.trim(),
+        full_name: data.full_name.trim(),
+        department: data.department.trim() || null,
+        phone: data.phone.trim() || null,
       }).eq('id', editing.id);
       if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
       toast({ title: 'Cập nhật giảng viên thành công' });
     } else {
-      if (!form.email.trim() || !form.password.trim()) {
-        toast({ variant: 'destructive', title: 'Lỗi', description: 'Email và mật khẩu là bắt buộc' });
-        return;
-      }
-      const email = form.email.trim();
+      const email = data.email.trim();
       const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
       if (dupEmail.data) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
@@ -92,8 +141,8 @@ const ManageTeachers = () => {
         { auth: { persistSession: false, autoRefreshToken: false } }
       );
       const { data: authData, error: authError } = await tempClient.auth.signUp({
-        email: form.email.trim(),
-        password: form.password.trim(),
+        email: data.email.trim(),
+        password: data.password.trim(),
       });
       if (authError || !authData.user) {
         toast({ variant: 'destructive', title: 'Lỗi tạo tài khoản', description: authError?.message || 'Không tạo được tài khoản' });
@@ -103,10 +152,10 @@ const ManageTeachers = () => {
       const [teacherRes, roleRes] = await Promise.all([
         supabase.from('teachers').insert({
           user_id: userId,
-          teacher_code: form.teacher_code.trim(),
-          full_name: form.full_name.trim(),
-          department: form.department.trim() || null,
-          phone: form.phone.trim() || null,
+          teacher_code: data.teacher_code.trim(),
+          full_name: data.full_name.trim(),
+          department: data.department.trim() || null,
+          phone: data.phone.trim() || null,
         }),
         supabase.from('user_roles').insert({ user_id: userId, role: 'teacher' }),
       ]);
@@ -119,7 +168,7 @@ const ManageTeachers = () => {
 
     setDialogOpen(false);
     resetForm();
-    fetch();
+    fetchTeachers();
   };
 
   const handleDelete = async (id: string) => {
@@ -138,7 +187,7 @@ const ManageTeachers = () => {
     }
     await supabase.from('teachers').delete().eq('id', id);
     toast({ title: 'Đã xóa giảng viên' });
-    fetch();
+    fetchTeachers();
   };
 
   const departmentOptions = Array.from(new Set(teachers.map(t => t.department).filter(Boolean))) as string[];
@@ -159,15 +208,38 @@ const ManageTeachers = () => {
             <div className="space-y-3">
               {!editing && (
                 <>
-                  <div><Label required>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label required>Mật khẩu</Label><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>
+                  <div>
+                    <Label required>Email</Label>
+                    <Input {...register('email')} />
+                    {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
+                  </div>
+                  <div>
+                    <Label required>Mật khẩu</Label>
+                    <Input type="password" {...register('password')} />
+                    {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
+                  </div>
                 </>
               )}
-              <div><Label required>Mã Giảng viên</Label><Input value={form.teacher_code} onChange={e => setForm({ ...form, teacher_code: e.target.value })} /></div>
-              <div><Label required>Họ tên</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
-              <div><Label>Khoa</Label><Input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} /></div>
-              <div><Label>Điện thoại</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+              <div>
+                <Label required>Mã Giảng viên</Label>
+                <Input {...register('teacher_code')} />
+                {errors.teacher_code && <p className="text-sm text-red-500 mt-1">{errors.teacher_code.message}</p>}
+              </div>
+              <div>
+                <Label required>Họ tên</Label>
+                <Input {...register('full_name')} />
+                {errors.full_name && <p className="text-sm text-red-500 mt-1">{errors.full_name.message}</p>}
+              </div>
+              <div>
+                <Label>Khoa</Label>
+                <Input {...register('department')} />
+              </div>
+              <div>
+                <Label>Điện thoại</Label>
+                <Input {...register('phone')} />
+                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>}
+              </div>
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>

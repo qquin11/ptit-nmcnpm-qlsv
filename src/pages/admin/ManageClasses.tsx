@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +14,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Search, Users } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
+const classFormSchema = z.object({
+  class_name: z.string().min(1, 'Tên lớp không được trống').max(40, 'Tên lớp tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Tên lớp chỉ chứa chữ, số và khoảng trắng'),
+  major: z.string().min(1, 'Chuyên ngành không được trống').max(40, 'Chuyên ngành tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Chuyên ngành chỉ chứa chữ, số và khoảng trắng'),
+  homeroom_teacher_id: z.string().min(1, 'Vui lòng chọn giáo viên chủ nhiệm'),
+});
+
+type ClassFormData = z.infer<typeof classFormSchema>;
+
+const defaultFormValues: ClassFormData = { class_name: '', major: '', homeroom_teacher_id: '' };
+
 const ManageClasses = () => {
   const [classes, setClasses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -19,11 +32,15 @@ const ManageClasses = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
-  const [form, setForm] = useState({ class_name: '', major: '', homeroom_teacher_id: '' });
   const [viewStudentsClass, setViewStudentsClass] = useState<any>(null);
   const [classStudents, setClassStudents] = useState<any[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
   const { toast } = useToast();
+
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ClassFormData>({
+    resolver: zodResolver(classFormSchema),
+    defaultValues: defaultFormValues,
+  });
 
   const fetchData = async () => {
     const [cl, te] = await Promise.all([
@@ -36,20 +53,16 @@ const ManageClasses = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const resetForm = () => { setForm({ class_name: '', major: '', homeroom_teacher_id: '' }); setEditing(null); };
+  const resetForm = () => { reset(defaultFormValues); setEditing(null); };
 
   const handleEdit = (c: any) => {
     setEditing(c);
-    setForm({ class_name: c.class_name, major: c.major || '', homeroom_teacher_id: c.homeroom_teacher_id || '' });
+    reset({ class_name: c.class_name, major: c.major || '', homeroom_teacher_id: c.homeroom_teacher_id || '' });
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.class_name.trim() || !form.major.trim() || !form.homeroom_teacher_id) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng điền đầy đủ các trường bắt buộc' });
-      return;
-    }
-    const name = form.class_name.trim();
+  const onSubmit = async (data: ClassFormData) => {
+    const name = data.class_name.trim();
     const dup = await supabase.from('classes').select('id').eq('class_name', name).maybeSingle();
     if (dup.data && dup.data.id !== editing?.id) {
       toast({ variant: 'destructive', title: 'Lỗi', description: 'Tên lớp đã tồn tại' });
@@ -57,8 +70,8 @@ const ManageClasses = () => {
     }
     const payload = {
       class_name: name,
-      major: form.major.trim(),
-      homeroom_teacher_id: form.homeroom_teacher_id,
+      major: data.major.trim(),
+      homeroom_teacher_id: data.homeroom_teacher_id,
     };
 
     if (editing) {
@@ -107,16 +120,31 @@ const ManageClasses = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? 'Sửa Lớp' : 'Thêm Lớp'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label required>Tên Lớp</Label><Input placeholder="VD: D20CN01" value={form.class_name} onChange={e => setForm({ ...form, class_name: e.target.value })} /></div>
-              <div><Label required>Chuyên ngành</Label><Input value={form.major} onChange={e => setForm({ ...form, major: e.target.value })} /></div>
+              <div>
+                <Label required>Tên Lớp</Label>
+                <Input placeholder="VD: D20CN01" {...register('class_name')} />
+                {errors.class_name && <p className="text-sm text-red-500 mt-1">{errors.class_name.message}</p>}
+              </div>
+              <div>
+                <Label required>Chuyên ngành</Label>
+                <Input {...register('major')} />
+                {errors.major && <p className="text-sm text-red-500 mt-1">{errors.major.message}</p>}
+              </div>
               <div>
                 <Label required>Giáo viên chủ nhiệm</Label>
-                <Select value={form.homeroom_teacher_id} onValueChange={v => setForm({ ...form, homeroom_teacher_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Chọn giáo viên chủ nhiệm" /></SelectTrigger>
-                  <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="homeroom_teacher_id"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn giáo viên chủ nhiệm" /></SelectTrigger>
+                      <SelectContent>{teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.homeroom_teacher_id && <p className="text-sm text-red-500 mt-1">{errors.homeroom_teacher_id.message}</p>}
               </div>
-              <Button onClick={handleSave} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
         </Dialog>
