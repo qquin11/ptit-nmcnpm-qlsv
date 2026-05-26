@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -13,8 +15,10 @@ const StudentDashboard = () => {
       const { data: student } = await supabase.from('students').select('*').eq('user_id', user.id).maybeSingle();
       if (student) setProfile(student);
     };
-    fetch();
+    fetch().finally(() => setLoading(false));
   }, [user]);
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

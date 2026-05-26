@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm, Controller } from 'react-hook-form';
+import PageLoading from '@/components/PageLoading';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ const ManageClasses = () => {
   const [viewStudentsClass, setViewStudentsClass] = useState<any>(null);
   const [classStudents, setClassStudents] = useState<any[]>([]);
   const [studentSearch, setStudentSearch] = useState('');
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ClassFormData>({
@@ -51,7 +53,7 @@ const ManageClasses = () => {
     if (te.data) setTeachers(te.data);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData().finally(() => setLoading(false)); }, []);
 
   const resetForm = () => { reset(defaultFormValues); setEditing(null); };
 
@@ -110,6 +112,8 @@ const ManageClasses = () => {
     toast({ title: 'Đã xóa lớp' });
     fetchData();
   };
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

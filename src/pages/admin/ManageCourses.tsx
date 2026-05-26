@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm, Controller } from 'react-hook-form';
+import PageLoading from '@/components/PageLoading';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ const ManageCourses = () => {
   const [candidateStudents, setCandidateStudents] = useState<any[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [studentSearch, setStudentSearch] = useState('');
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<CourseFormData>({
@@ -57,7 +59,7 @@ const ManageCourses = () => {
     if (te.data) setTeachers(te.data);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData().finally(() => setLoading(false)); }, []);
 
   const resetForm = () => { reset(defaultFormValues); setEditing(null); };
 
@@ -152,6 +154,8 @@ const ManageCourses = () => {
     toast({ title: 'Đã xóa môn học' });
     fetchData();
   };
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

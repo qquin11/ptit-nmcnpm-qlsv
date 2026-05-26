@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -86,6 +87,7 @@ const ManageStudents = () => {
   const [coursesDialogStudent, setCoursesDialogStudent] = useState<Student | null>(null);
   const [viewing, setViewing] = useState<Student | null>(null);
   const [studentCourses, setStudentCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<StudentFormData>({
@@ -110,7 +112,7 @@ const ManageStudents = () => {
     if (cl.data) setClasses(cl.data);
   };
 
-  useEffect(() => { fetchStudents(); }, []);
+  useEffect(() => { fetchStudents().finally(() => setLoading(false)); }, []);
 
   const resetForm = () => {
     reset(defaultFormValues);
@@ -255,6 +257,8 @@ const ManageStudents = () => {
     (filterClassId === 'all' || s.class_id === filterClassId) &&
     (filterDepartment === 'all' || s.department === filterDepartment)
   );
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

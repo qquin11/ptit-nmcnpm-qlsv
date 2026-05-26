@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -70,6 +71,7 @@ const ManageTeachers = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Teacher | null>(null);
   const [viewing, setViewing] = useState<Teacher | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TeacherFormData>({
@@ -90,7 +92,7 @@ const ManageTeachers = () => {
     }
   };
 
-  useEffect(() => { fetchTeachers(); }, []);
+  useEffect(() => { fetchTeachers().finally(() => setLoading(false)); }, []);
 
   const resetForm = () => {
     reset(defaultFormValues);
@@ -196,6 +198,8 @@ const ManageTeachers = () => {
     (t.full_name.toLowerCase().includes(search.toLowerCase()) || t.teacher_code.toLowerCase().includes(search.toLowerCase())) &&
     (filterDepartment === 'all' || t.department === filterDepartment)
   );
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

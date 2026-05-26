@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import PageLoading from '@/components/PageLoading';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,6 +37,7 @@ const TeacherClasses = () => {
   const [semesterFilter, setSemesterFilter] = useState<string>(ALL);
   const [classFilter, setClassFilter] = useState<string>(ALL);
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -63,7 +65,7 @@ const TeacherClasses = () => {
       }));
       setRows(mapped);
     };
-    load();
+    load().finally(() => setLoading(false));
   }, [user]);
 
   const courseOptions = useMemo(() => {
@@ -95,6 +97,8 @@ const TeacherClasses = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  if (loading) return <PageLoading />;
 
   return (
     <div className="page-container">

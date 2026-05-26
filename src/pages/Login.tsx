@@ -31,7 +31,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col light" data-theme="light">
       {/* Dark navy header */}
       <header className="relative z-20 flex items-center justify-between bg-[#001d3d] px-6 py-3">
         <div className="flex items-center gap-3">
@@ -74,7 +74,7 @@ const Login = () => {
 
           {/* Login card */}
           <div className="mx-auto w-full max-w-md md:mx-0">
-            <div className="rounded-2xl border border-white/10 bg-white/95 p-8 shadow-2xl backdrop-blur-sm">
+            <div className="rounded-2xl border border-white/10 bg-white p-8 shadow-2xl backdrop-blur-sm">
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#001d3d]">
                   <GraduationCap size={24} className="text-white" />
