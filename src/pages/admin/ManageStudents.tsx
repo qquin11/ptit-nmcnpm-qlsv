@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import PageLoading from '@/components/PageLoading';
@@ -77,6 +78,7 @@ const defaultFormValues: StudentFormData = {
 };
 
 const ManageStudents = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -221,7 +223,7 @@ const ManageStudents = () => {
     setStudentCourses([]);
     const { data } = await supabase
       .from('grades')
-      .select('id, average, courses(course_code, course_name, credits), semesters(name, start_date)')
+      .select('id, course_id, semester_id, average, courses(course_code, course_name, credits), semesters(name, start_date)')
       .eq('student_id', s.id);
     if (data) {
       const sorted = [...data].sort((a: any, b: any) => {
@@ -409,7 +411,7 @@ const ManageStudents = () => {
                 <TableCell>{i + 1}</TableCell>
                 <TableCell><button onClick={() => setViewing(s)} className="font-mono text-sm text-primary hover:underline">{s.student_code}</button></TableCell>
                 <TableCell className="font-medium">{s.full_name}</TableCell>
-                <TableCell>{className(s)}</TableCell>
+                <TableCell>{s.class_id ? <button onClick={() => navigate(`/admin/classes/${s.class_id}`)} className="text-primary hover:underline">{className(s)}</button> : '—'}</TableCell>
                 <TableCell>{s.department || '—'}</TableCell>
                 <TableCell>{s.email || '—'}</TableCell>
                 <TableCell>{s.phone || '—'}</TableCell>
@@ -451,10 +453,10 @@ const ManageStudents = () => {
             <TableBody>
               {studentCourses.map((g: any) => (
                 <TableRow key={g.id}>
-                  <TableCell className="font-mono text-sm">{g.courses?.course_code}</TableCell>
+                  <TableCell><button onClick={() => navigate(`/admin/courses/${g.course_id}`)} className="font-mono text-sm text-primary hover:underline">{g.courses?.course_code}</button></TableCell>
                   <TableCell className="font-medium">{g.courses?.course_name}</TableCell>
                   <TableCell>{g.courses?.credits ?? '—'}</TableCell>
-                  <TableCell>{g.semesters?.name ?? '—'}</TableCell>
+                  <TableCell>{g.semester_id ? <button onClick={() => navigate(`/admin/semesters/${g.semester_id}`)} className="text-primary hover:underline">{g.semesters?.name}</button> : '—'}</TableCell>
                   <TableCell className="font-bold">{g.average === null || g.average === undefined ? '—' : Number(g.average).toFixed(2)}</TableCell>
                 </TableRow>
               ))}
@@ -476,7 +478,7 @@ const ManageStudents = () => {
               <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob ? viewing.dob.split('-').reverse().join('/') : '—'}</dd>
               <dt className="text-muted-foreground">Giới tính</dt><dd className="col-span-2">{viewing.gender === 'M' ? 'Nam' : viewing.gender === 'F' ? 'Nữ' : '—'}</dd>
               <dt className="text-muted-foreground">Chuyên ngành</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
-              <dt className="text-muted-foreground">Lớp</dt><dd className="col-span-2">{viewing.classes?.class_name || '—'}</dd>
+              <dt className="text-muted-foreground">Lớp</dt><dd className="col-span-2">{viewing.class_id ? <button onClick={() => navigate(`/admin/classes/${viewing.class_id}`)} className="text-primary hover:underline">{viewing.classes?.class_name}</button> : '—'}</dd>
               <dt className="text-muted-foreground">Email</dt><dd className="col-span-2">{viewing.email || '—'}</dd>
               <dt className="text-muted-foreground">Điện thoại</dt><dd className="col-span-2">{viewing.phone || '—'}</dd>
               <dt className="text-muted-foreground">Địa chỉ</dt><dd className="col-span-2">{viewing.address || '—'}</dd>
