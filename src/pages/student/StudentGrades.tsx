@@ -13,6 +13,7 @@ const fmt = (n: number | null | undefined): string => (n === null || n === undef
 const StudentGrades = () => {
   const { user } = useAuth();
   const [grades, setGrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSemester, setSelectedSemester] = useState<string>(ALL);
   const [selectedCourse, setSelectedCourse] = useState<string>(ALL);
 

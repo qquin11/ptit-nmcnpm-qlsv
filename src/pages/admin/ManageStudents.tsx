@@ -473,7 +473,7 @@ const ManageStudents = () => {
             <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
               <dt className="text-muted-foreground">Mã SV</dt><dd className="col-span-2 font-mono">{viewing.student_code}</dd>
               <dt className="text-muted-foreground">Họ tên</dt><dd className="col-span-2 font-medium">{viewing.full_name}</dd>
-              <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob || '—'}</dd>
+              <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob ? viewing.dob.split('-').reverse().join('/') : '—'}</dd>
               <dt className="text-muted-foreground">Giới tính</dt><dd className="col-span-2">{viewing.gender === 'M' ? 'Nam' : viewing.gender === 'F' ? 'Nữ' : '—'}</dd>
               <dt className="text-muted-foreground">Chuyên ngành</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
               <dt className="text-muted-foreground">Lớp</dt><dd className="col-span-2">{viewing.classes?.class_name || '—'}</dd>

@@ -17,22 +17,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const courseFormSchema = z.object({
-  course_code: z.string().min(1, 'Mã môn học không được trống').length(10, 'Mã môn học phải đúng 10 ký tự').regex(/^[a-zA-Z0-9]+$/, 'Mã môn học chỉ chứa chữ và số'),
-  course_name: z.string().min(1, 'Tên môn học không được trống').max(40, 'Tên môn học tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Tên môn học chỉ chứa chữ, số và khoảng trắng'),
+  course_code: z.string().min(1, 'Mã môn học không được trống').max(10, 'Mã môn học tối đa 10 ký tự').regex(/^[a-zA-Z0-9]+$/, 'Mã môn học chỉ chứa chữ và số'),
+  course_name: z.string().min(1, 'Tên môn học không được trống').max(40, 'Tên môn học tối đa 40 ký tự').regex(/^[\p{L}0-9\s]+$/u, 'Tên môn học chỉ chứa chữ, số và khoảng trắng'),
   credits: z.string().min(1, 'Số tín chỉ không được trống').regex(/^\d$/, 'Số tín chỉ phải là 1 chữ số'),
   department: z.string().min(1, 'Khoa không được trống'),
   teacher_id: z.string().min(1, 'Vui lòng chọn giảng viên'),
+  semester_id: z.string().min(1, 'Vui lòng chọn học kỳ'),
 });
 
 type CourseFormData = z.infer<typeof courseFormSchema>;
 
-const defaultFormValues: CourseFormData = { course_code: '', course_name: '', credits: '3', department: '', teacher_id: '' };
+const defaultFormValues: CourseFormData = { course_code: '', course_name: '', credits: '3', department: '', teacher_id: '', semester_id: '' };
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterSemester, setFilterSemester] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [viewing, setViewing] = useState<any>(null);
@@ -51,12 +53,14 @@ const ManageCourses = () => {
   });
 
   const fetchData = async () => {
-    const [co, te] = await Promise.all([
-      supabase.from('courses').select('*, teachers(full_name)').order('created_at', { ascending: false }),
+    const [co, te, se] = await Promise.all([
+      supabase.from('courses').select('*, teachers(full_name), semesters(name)').order('created_at', { ascending: false }),
       supabase.from('teachers').select('id, full_name'),
+      supabase.from('semesters').select('id, name').order('start_date', { ascending: false }),
     ]);
     if (co.data) setCourses(co.data);
     if (te.data) setTeachers(te.data);
+    if (se.data) setSemesters(se.data);
   };
 
   useEffect(() => { fetchData().finally(() => setLoading(false)); }, []);
@@ -65,7 +69,7 @@ const ManageCourses = () => {
 
   const handleEdit = (c: any) => {
     setEditing(c);
-    reset({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '', teacher_id: c.teacher_id || '' });
+    reset({ course_code: c.course_code, course_name: c.course_name, credits: String(c.credits), department: c.department || '', teacher_id: c.teacher_id || '', semester_id: c.semester_id || '' });
     setDialogOpen(true);
   };
 
@@ -82,6 +86,7 @@ const ManageCourses = () => {
       credits: parseInt(data.credits) || 3,
       department: data.department.trim(),
       teacher_id: data.teacher_id,
+      semester_id: data.semester_id,
     };
 
     if (editing) {
@@ -200,6 +205,20 @@ const ManageCourses = () => {
                 />
                 {errors.teacher_id && <p className="text-sm text-red-500 mt-1">{errors.teacher_id.message}</p>}
               </div>
+              <div>
+                <Label required>Học kỳ</Label>
+                <Controller
+                  control={control}
+                  name="semester_id"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger><SelectValue placeholder="Chọn học kỳ" /></SelectTrigger>
+                      <SelectContent>{semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.semester_id && <p className="text-sm text-red-500 mt-1">{errors.semester_id.message}</p>}
+              </div>
               <Button onClick={handleSubmit(onSubmit)} className="w-full">{editing ? 'Cập nhật' : 'Tạo mới'}</Button>
             </div>
           </DialogContent>
@@ -220,6 +239,13 @@ const ManageCourses = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={filterSemester} onValueChange={setFilterSemester}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Học kỳ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả học kỳ</SelectItem>
+            {semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -232,6 +258,7 @@ const ManageCourses = () => {
               <TableHead>Số tín chỉ</TableHead>
               <TableHead>Khoa</TableHead>
               <TableHead>Giảng viên</TableHead>
+              <TableHead>Học kỳ</TableHead>
               <TableHead className="w-24">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
@@ -239,7 +266,8 @@ const ManageCourses = () => {
             {courses.filter(c =>
               (c.course_name.toLowerCase().includes(search.toLowerCase()) ||
                 c.course_code.toLowerCase().includes(search.toLowerCase())) &&
-              (filterDepartment === 'all' || c.department === filterDepartment)
+              (filterDepartment === 'all' || c.department === filterDepartment) &&
+              (filterSemester === 'all' || c.semester_id === filterSemester)
             ).map((c, i) => (
               <TableRow key={c.id}>
                 <TableCell>{i + 1}</TableCell>
@@ -248,6 +276,7 @@ const ManageCourses = () => {
                 <TableCell>{c.credits}</TableCell>
                 <TableCell>{c.department || '—'}</TableCell>
                 <TableCell>{(c.teachers as any)?.full_name || '—'}</TableCell>
+                <TableCell>{(c.semesters as any)?.name || '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil size={14} /></Button>
@@ -260,9 +289,10 @@ const ManageCourses = () => {
             {courses.filter(c =>
               (c.course_name.toLowerCase().includes(search.toLowerCase()) ||
                 c.course_code.toLowerCase().includes(search.toLowerCase())) &&
-              (filterDepartment === 'all' || c.department === filterDepartment)
+              (filterDepartment === 'all' || c.department === filterDepartment) &&
+              (filterSemester === 'all' || c.semester_id === filterSemester)
             ).length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Không tìm thấy môn học</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Không tìm thấy môn học</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -358,6 +388,7 @@ const ManageCourses = () => {
               <dt className="text-muted-foreground">Số tín chỉ</dt><dd className="col-span-2">{viewing.credits}</dd>
               <dt className="text-muted-foreground">Khoa</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
               <dt className="text-muted-foreground">Giảng viên</dt><dd className="col-span-2">{viewing.teachers?.full_name || '—'}</dd>
+              <dt className="text-muted-foreground">Học kỳ</dt><dd className="col-span-2">{viewing.semesters?.name || '—'}</dd>
             </dl>
           )}
         </DialogContent>

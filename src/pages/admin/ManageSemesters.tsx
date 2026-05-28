@@ -15,21 +15,12 @@ import { Plus, Pencil, Search } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const semesterFormSchema = z.object({
-  name: z.string().min(1, 'Tên học kỳ không được trống').max(40, 'Tên học kỳ tối đa 40 ký tự').regex(/^[a-zA-Z0-9\s]+$/, 'Tên học kỳ chỉ chứa chữ, số và khoảng trắng'),
+  name: z.string().min(1, 'Tên học kỳ không được trống').max(40, 'Tên học kỳ tối đa 40 ký tự'),
   start_date: z.string().min(1, 'Ngày bắt đầu không được trống'),
   end_date: z.string().min(1, 'Ngày kết thúc không được trống'),
 }).superRefine((data, ctx) => {
-  if (data.start_date && data.end_date) {
-    if (data.start_date >= data.end_date) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_date'], message: 'Ngày kết thúc phải sau ngày bắt đầu' });
-    }
-    const today = new Date().toISOString().split('T')[0];
-    if (data.start_date > today) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['start_date'], message: 'Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày hiện tại' });
-    }
-    if (data.end_date < today) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_date'], message: 'Ngày kết thúc phải lớn hơn hoặc bằng ngày hiện tại' });
-    }
+  if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['end_date'], message: 'Ngày kết thúc phải sau ngày bắt đầu' });
   }
 });
 

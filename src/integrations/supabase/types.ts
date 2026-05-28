@@ -39,11 +39,12 @@ export type Database = {
         ];
       };
       courses: {
-        Row: { id: string; course_code: string; course_name: string; credits: number; department: string | null; teacher_id: string | null } & Timestamps;
-        Insert: { id?: string; course_code: string; course_name: string; credits?: number; department?: string | null; teacher_id?: string | null; created_at?: string };
+        Row: { id: string; course_code: string; course_name: string; credits: number; department: string | null; teacher_id: string | null; semester_id: string | null } & Timestamps;
+        Insert: { id?: string; course_code: string; course_name: string; credits?: number; department?: string | null; teacher_id?: string | null; semester_id?: string | null; created_at?: string };
         Update: Partial<Database['public']['Tables']['courses']['Insert']>;
         Relationships: [
           { foreignKeyName: 'courses_teacher_id_fkey'; columns: ['teacher_id']; isOneToOne: false; referencedRelation: 'teachers'; referencedColumns: ['id'] },
+          { foreignKeyName: 'courses_semester_id_fkey'; columns: ['semester_id']; isOneToOne: false; referencedRelation: 'semesters'; referencedColumns: ['id'] },
         ];
       };
       semesters: {
