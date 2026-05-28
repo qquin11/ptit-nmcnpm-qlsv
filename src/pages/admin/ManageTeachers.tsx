@@ -81,15 +81,7 @@ const ManageTeachers = () => {
 
   const fetchTeachers = async () => {
     const { data } = await supabase.from('teachers').select('*').order('created_at', { ascending: false });
-    if (data) {
-      const userIds = data.map((t: any) => t.user_id).filter(Boolean);
-      let emailMap: Record<string, string> = {};
-      if (userIds.length) {
-        const { data: profs } = await supabase.from('profiles').select('user_id, email').in('user_id', userIds);
-        if (profs) emailMap = Object.fromEntries(profs.map((p: any) => [p.user_id, p.email]));
-      }
-      setTeachers(data.map((t: any) => ({ ...t, email: emailMap[t.user_id] ?? null })));
-    }
+    if (data) setTeachers(data as any);
   };
 
   useEffect(() => { fetchTeachers().finally(() => setLoading(false)); }, []);
@@ -132,8 +124,11 @@ const ManageTeachers = () => {
       toast({ title: 'Cập nhật giảng viên thành công' });
     } else {
       const email = data.email.trim();
-      const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
-      if (dupEmail.data) {
+      const [dupStudentEmail, dupTeacherEmail] = await Promise.all([
+        supabase.from('students').select('id').eq('email', email).maybeSingle(),
+        supabase.from('teachers').select('id').eq('email', email).maybeSingle(),
+      ]);
+      if (dupStudentEmail.data || dupTeacherEmail.data) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
         return;
       }
@@ -156,6 +151,7 @@ const ManageTeachers = () => {
           user_id: userId,
           teacher_code: data.teacher_code.trim(),
           full_name: data.full_name.trim(),
+          email: data.email.trim(),
           department: data.department.trim() || null,
           phone: data.phone.trim() || null,
         }),

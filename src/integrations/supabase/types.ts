@@ -16,15 +16,9 @@ export type Database = {
         Update: Partial<{ id: string; user_id: string; role: 'admin' | 'teacher' | 'student'; created_at: string }>;
         Relationships: [];
       };
-      profiles: {
-        Row: { id: string; user_id: string; full_name: string; email: string | null; phone: string | null; avatar_url: string | null } & WithUpdated;
-        Insert: { id?: string; user_id: string; full_name?: string; email?: string | null; phone?: string | null; avatar_url?: string | null; created_at?: string; updated_at?: string };
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
-        Relationships: [];
-      };
       teachers: {
-        Row: { id: string; user_id: string; teacher_code: string; full_name: string; department: string | null; phone: string | null } & Timestamps;
-        Insert: { id?: string; user_id: string; teacher_code: string; full_name: string; department?: string | null; phone?: string | null; created_at?: string };
+        Row: { id: string; user_id: string; teacher_code: string; full_name: string; email: string | null; department: string | null; phone: string | null } & Timestamps;
+        Insert: { id?: string; user_id: string; teacher_code: string; full_name: string; email?: string | null; department?: string | null; phone?: string | null; created_at?: string };
         Update: Partial<Database['public']['Tables']['teachers']['Insert']>;
         Relationships: [];
       };
@@ -37,8 +31,8 @@ export type Database = {
         ];
       };
       students: {
-        Row: { id: string; user_id: string; student_code: string; full_name: string; class_id: string | null; dob: string | null; department: string | null; phone: string | null } & Timestamps;
-        Insert: { id?: string; user_id: string; student_code: string; full_name: string; class_id?: string | null; dob?: string | null; department?: string | null; phone?: string | null; created_at?: string };
+        Row: { id: string; user_id: string; student_code: string; full_name: string; email: string | null; class_id: string | null; dob: string | null; department: string | null; phone: string | null } & Timestamps;
+        Insert: { id?: string; user_id: string; student_code: string; full_name: string; email?: string | null; class_id?: string | null; dob?: string | null; department?: string | null; phone?: string | null; created_at?: string };
         Update: Partial<Database['public']['Tables']['students']['Insert']>;
         Relationships: [
           { foreignKeyName: 'students_class_id_fkey'; columns: ['class_id']; isOneToOne: false; referencedRelation: 'classes'; referencedColumns: ['id'] },
