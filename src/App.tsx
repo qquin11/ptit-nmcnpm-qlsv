@@ -15,8 +15,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageStudents from "./pages/admin/ManageStudents";
 import ManageTeachers from "./pages/admin/ManageTeachers";
 import ManageCourses from "./pages/admin/ManageCourses";
+import CourseDetails from "./pages/admin/CourseDetails";
 import ManageClasses from "./pages/admin/ManageClasses";
+import ClassDetails from "./pages/admin/ClassDetails";
 import ManageSemesters from "./pages/admin/ManageSemesters";
+import SemesterDetails from "./pages/admin/SemesterDetails";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -85,8 +88,11 @@ const App = () => (
             <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><ManageStudents /></ProtectedRoute>} />
             <Route path="/admin/teachers" element={<ProtectedRoute allowedRoles={['admin']}><ManageTeachers /></ProtectedRoute>} />
             <Route path="/admin/courses" element={<ProtectedRoute allowedRoles={['admin']}><ManageCourses /></ProtectedRoute>} />
+            <Route path="/admin/courses/:id" element={<ProtectedRoute allowedRoles={['admin']}><CourseDetails /></ProtectedRoute>} />
             <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><ManageClasses /></ProtectedRoute>} />
+            <Route path="/admin/classes/:id" element={<ProtectedRoute allowedRoles={['admin']}><ClassDetails /></ProtectedRoute>} />
             <Route path="/admin/semesters" element={<ProtectedRoute allowedRoles={['admin']}><ManageSemesters /></ProtectedRoute>} />
+            <Route path="/admin/semesters/:id" element={<ProtectedRoute allowedRoles={['admin']}><SemesterDetails /></ProtectedRoute>} />
 
             {/* Teacher Routes */}
             <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />

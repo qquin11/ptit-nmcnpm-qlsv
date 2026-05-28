@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm } from 'react-hook-form';
 import PageLoading from '@/components/PageLoading';
@@ -29,11 +30,11 @@ type SemesterFormData = z.infer<typeof semesterFormSchema>;
 const defaultFormValues: SemesterFormData = { name: '', start_date: '', end_date: '' };
 
 const ManageSemesters = () => {
+  const navigate = useNavigate();
   const [semesters, setSemesters] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [viewing, setViewing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -134,9 +135,9 @@ const ManageSemesters = () => {
               s.name.toLowerCase().includes(search.toLowerCase())
             ).map((s) => (
               <TableRow key={s.id}>
-                <TableCell><button onClick={() => setViewing(s)} className="font-medium text-primary hover:underline">{s.name}</button></TableCell>
-                <TableCell>{s.start_date}</TableCell>
-                <TableCell>{s.end_date}</TableCell>
+                <TableCell><button onClick={() => navigate(`/admin/semesters/${s.id}`)} className="font-medium text-primary hover:underline">{s.name}</button></TableCell>
+                <TableCell>{s.start_date?.split('-').reverse().join('/')}</TableCell>
+                <TableCell>{s.end_date?.split('-').reverse().join('/')}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(s)}><Pencil size={14} /></Button>
@@ -154,18 +155,6 @@ const ManageSemesters = () => {
         </Table>
       </Card>
 
-      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Chi tiết học kỳ</DialogTitle></DialogHeader>
-          {viewing && (
-            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Tên học kỳ</dt><dd className="col-span-2 font-medium">{viewing.name}</dd>
-              <dt className="text-muted-foreground">Ngày bắt đầu</dt><dd className="col-span-2">{viewing.start_date}</dd>
-              <dt className="text-muted-foreground">Ngày kết thúc</dt><dd className="col-span-2">{viewing.end_date}</dd>
-            </dl>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

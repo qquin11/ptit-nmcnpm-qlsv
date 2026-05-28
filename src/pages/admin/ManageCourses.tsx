@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm, Controller } from 'react-hook-form';
 import PageLoading from '@/components/PageLoading';
@@ -12,8 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Search, UserPlus } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Pencil, Search } from 'lucide-react';
 import { ConfirmDeleteButton } from '@/components/ConfirmDeleteButton';
 
 const courseFormSchema = z.object({
@@ -30,6 +30,7 @@ type CourseFormData = z.infer<typeof courseFormSchema>;
 const defaultFormValues: CourseFormData = { course_code: '', course_name: '', credits: '3', department: '', teacher_id: '', semester_id: '' };
 
 const ManageCourses = () => {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -37,13 +38,7 @@ const ManageCourses = () => {
   const [filterSemester, setFilterSemester] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [viewing, setViewing] = useState<any>(null);
-  const [addStudentsCourse, setAddStudentsCourse] = useState<any>(null);
   const [semesters, setSemesters] = useState<any[]>([]);
-  const [addSemesterId, setAddSemesterId] = useState<string>('');
-  const [candidateStudents, setCandidateStudents] = useState<any[]>([]);
-  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
-  const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -101,43 +96,6 @@ const ManageCourses = () => {
     setDialogOpen(false);
     resetForm();
     fetchData();
-  };
-
-  const openAddStudents = async (c: any) => {
-    setAddStudentsCourse(c);
-    setAddSemesterId(c.semester_id || '');
-    setSelectedStudentIds(new Set());
-    setStudentSearch('');
-    const { data: st } = await supabase.from('students').select('id, student_code, full_name, classes(class_name)').order('full_name');
-    if (st) setCandidateStudents(st);
-  };
-
-  const toggleStudent = (id: string) => {
-    setSelectedStudentIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const handleAddStudents = async () => {
-    if (!addStudentsCourse) return;
-    if (!addSemesterId) {
-      toast({ variant: 'destructive', title: 'Lỗi', description: 'Vui lòng chọn học kỳ' });
-      return;
-    }
-    if (selectedStudentIds.size === 0) return;
-    const rows = Array.from(selectedStudentIds).map(student_id => ({
-      student_id, course_id: addStudentsCourse.id, semester_id: addSemesterId,
-    }));
-    const { error, count } = await supabase
-      .from('grades')
-      .upsert(rows, { onConflict: 'student_id,course_id,semester_id', ignoreDuplicates: true, count: 'exact' });
-    if (error) { toast({ variant: 'destructive', title: 'Lỗi', description: error.message }); return; }
-    toast({ title: `Đã thêm ${count ?? rows.length} sinh viên vào môn học ${addStudentsCourse.course_name}` });
-    setAddStudentsCourse(null);
-    setCandidateStudents([]);
-    setSelectedStudentIds(new Set());
   };
 
   const handleDelete = async (id: string) => {
@@ -263,16 +221,15 @@ const ManageCourses = () => {
             ).map((c, i) => (
               <TableRow key={c.id}>
                 <TableCell>{i + 1}</TableCell>
-                <TableCell><button onClick={() => setViewing(c)} className="font-mono text-sm text-primary hover:underline">{c.course_code}</button></TableCell>
+                <TableCell><button onClick={() => navigate(`/admin/courses/${c.id}`)} className="font-mono text-sm text-primary hover:underline">{c.course_code}</button></TableCell>
                 <TableCell className="font-medium">{c.course_name}</TableCell>
                 <TableCell>{c.credits}</TableCell>
                 <TableCell>{c.department || '—'}</TableCell>
                 <TableCell>{(c.teachers as any)?.full_name || '—'}</TableCell>
-                <TableCell>{(c.semesters as any)?.name || '—'}</TableCell>
+                <TableCell>{c.semester_id ? <button onClick={() => navigate(`/admin/semesters/${c.semester_id}`)} className="text-primary hover:underline">{(c.semesters as any)?.name}</button> : '—'}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil size={14} /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => openAddStudents(c)} title="Thêm sinh viên vào môn học"><UserPlus size={14} /></Button>
                     <ConfirmDeleteButton onConfirm={() => handleDelete(c.id)} description={`Bạn có chắc muốn xóa môn học "${c.course_name}"? Hành động này không thể hoàn tác.`} />
                   </div>
                 </TableCell>
@@ -290,88 +247,6 @@ const ManageCourses = () => {
         </Table>
       </Card>
 
-      <Dialog open={!!addStudentsCourse} onOpenChange={(o) => { if (!o) { setAddStudentsCourse(null); setCandidateStudents([]); setSelectedStudentIds(new Set()); setAddSemesterId(''); } }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Thêm sinh viên vào môn học {addStudentsCourse?.course_name}</DialogTitle>
-          </DialogHeader>
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Tìm sinh viên..." className="pl-9" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
-          </div>
-          <div className="flex-1 overflow-y-auto border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    {(() => {
-                      const visible = candidateStudents.filter((s) =>
-                        s.full_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                        s.student_code.toLowerCase().includes(studentSearch.toLowerCase())
-                      );
-                      const allSelected = visible.length > 0 && visible.every(s => selectedStudentIds.has(s.id));
-                      return (
-                        <Checkbox
-                          checked={allSelected}
-                          onCheckedChange={() => {
-                            setSelectedStudentIds(prev => {
-                              const next = new Set(prev);
-                              if (allSelected) visible.forEach(s => next.delete(s.id));
-                              else visible.forEach(s => next.add(s.id));
-                              return next;
-                            });
-                          }}
-                        />
-                      );
-                    })()}
-                  </TableHead>
-                  <TableHead>Mã SV</TableHead>
-                  <TableHead>Họ tên</TableHead>
-                  <TableHead>Lớp</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {candidateStudents
-                  .filter((s) =>
-                    s.full_name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                    s.student_code.toLowerCase().includes(studentSearch.toLowerCase())
-                  )
-                  .map((s) => (
-                    <TableRow key={s.id} onClick={() => toggleStudent(s.id)} className="cursor-pointer">
-                      <TableCell onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedStudentIds.has(s.id)} onCheckedChange={() => toggleStudent(s.id)} /></TableCell>
-                      <TableCell className="font-mono text-sm">{s.student_code}</TableCell>
-                      <TableCell className="font-medium">{s.full_name}</TableCell>
-                      <TableCell>{s.classes?.class_name || '—'}</TableCell>
-                    </TableRow>
-                  ))}
-                {candidateStudents.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Không có sinh viên</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-sm text-muted-foreground">Đã chọn {selectedStudentIds.size} sinh viên</span>
-            <Button onClick={handleAddStudents} disabled={selectedStudentIds.size === 0 || !addSemesterId}>Thêm vào môn học</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Chi tiết môn học</DialogTitle></DialogHeader>
-          {viewing && (
-            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Mã môn học</dt><dd className="col-span-2 font-mono">{viewing.course_code}</dd>
-              <dt className="text-muted-foreground">Tên môn học</dt><dd className="col-span-2 font-medium">{viewing.course_name}</dd>
-              <dt className="text-muted-foreground">Số tín chỉ</dt><dd className="col-span-2">{viewing.credits}</dd>
-              <dt className="text-muted-foreground">Khoa</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
-              <dt className="text-muted-foreground">Giảng viên</dt><dd className="col-span-2">{viewing.teachers?.full_name || '—'}</dd>
-              <dt className="text-muted-foreground">Học kỳ</dt><dd className="col-span-2">{viewing.semesters?.name || '—'}</dd>
-            </dl>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
