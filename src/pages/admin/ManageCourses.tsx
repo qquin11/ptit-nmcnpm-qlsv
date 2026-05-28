@@ -105,22 +105,14 @@ const ManageCourses = () => {
 
   const openAddStudents = async (c: any) => {
     setAddStudentsCourse(c);
-    setAddSemesterId('');
+    setAddSemesterId(c.semester_id || '');
     setSelectedStudentIds(new Set());
     setStudentSearch('');
-    const [se, st] = await Promise.all([
-      supabase.from('semesters').select('id, name').order('start_date', { ascending: false }),
-      supabase.from('students').select('id, student_code, full_name, classes(class_name)').order('full_name'),
-    ]);
-    if (se.data) setSemesters(se.data);
-    if (st.data) setCandidateStudents(st.data);
+    const { data: st } = await supabase.from('students').select('id, student_code, full_name, classes(class_name)').order('full_name');
+    if (st) setCandidateStudents(st);
   };
 
   const toggleStudent = (id: string) => {
-    if (!addSemesterId) {
-      toast({ variant: 'destructive', title: 'Chưa chọn học kỳ', description: 'Vui lòng chọn học kỳ trước khi chọn sinh viên.' });
-      return;
-    }
     setSelectedStudentIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -303,18 +295,9 @@ const ManageCourses = () => {
           <DialogHeader>
             <DialogTitle>Thêm sinh viên vào môn học {addStudentsCourse?.course_name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label required>Học kỳ</Label>
-              <Select value={addSemesterId} onValueChange={setAddSemesterId}>
-                <SelectTrigger><SelectValue placeholder="Chọn học kỳ" /></SelectTrigger>
-                <SelectContent>{semesters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Tìm sinh viên..." className="pl-9" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
-            </div>
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Tìm sinh viên..." className="pl-9" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
           </div>
           <div className="flex-1 overflow-y-auto border rounded-md">
             <Table>
@@ -331,10 +314,6 @@ const ManageCourses = () => {
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={() => {
-                            if (!addSemesterId) {
-                              toast({ variant: 'destructive', title: 'Chưa chọn học kỳ', description: 'Vui lòng chọn học kỳ trước khi chọn sinh viên.' });
-                              return;
-                            }
                             setSelectedStudentIds(prev => {
                               const next = new Set(prev);
                               if (allSelected) visible.forEach(s => next.delete(s.id));
@@ -358,7 +337,7 @@ const ManageCourses = () => {
                     s.student_code.toLowerCase().includes(studentSearch.toLowerCase())
                   )
                   .map((s) => (
-                    <TableRow key={s.id} onClick={() => toggleStudent(s.id)} className={`cursor-pointer ${!addSemesterId ? 'opacity-60' : ''}`}>
+                    <TableRow key={s.id} onClick={() => toggleStudent(s.id)} className="cursor-pointer">
                       <TableCell onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedStudentIds.has(s.id)} onCheckedChange={() => toggleStudent(s.id)} /></TableCell>
                       <TableCell className="font-mono text-sm">{s.student_code}</TableCell>
                       <TableCell className="font-medium">{s.full_name}</TableCell>
