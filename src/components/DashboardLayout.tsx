@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Users, BookOpen, Calendar, GraduationCap,
   ClipboardList, LogOut, Menu,
-  Moon, Sun, School
+  Moon, Sun, School, UserCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -26,12 +26,14 @@ const adminNav: NavItem[] = [
 
 const teacherNav: NavItem[] = [
   { labelKey: 'nav.dashboard', path: '/teacher', icon: <LayoutDashboard size={18} /> },
+  { labelKey: 'nav.profile', path: '/teacher/profile', icon: <UserCircle size={18} /> },
   { labelKey: 'nav.myClasses', path: '/teacher/classes', icon: <School size={18} /> },
   { labelKey: 'nav.gradeInput', path: '/teacher/grades', icon: <ClipboardList size={18} /> },
 ];
 
 const studentNav: NavItem[] = [
   { labelKey: 'nav.dashboard', path: '/student', icon: <LayoutDashboard size={18} /> },
+  { labelKey: 'nav.profile', path: '/student/profile', icon: <UserCircle size={18} /> },
   { labelKey: 'nav.grades', path: '/student/grades', icon: <ClipboardList size={18} /> },
 ];
 

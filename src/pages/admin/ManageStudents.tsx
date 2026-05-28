@@ -100,15 +100,7 @@ const ManageStudents = () => {
       supabase.from('students').select('*, classes(class_name)').order('created_at', { ascending: false }),
       supabase.from('classes').select('id, class_name'),
     ]);
-    if (st.data) {
-      const userIds = (st.data as any[]).map(s => s.user_id).filter(Boolean);
-      let emailMap: Record<string, string> = {};
-      if (userIds.length) {
-        const { data: profs } = await supabase.from('profiles').select('user_id, email').in('user_id', userIds);
-        if (profs) emailMap = Object.fromEntries(profs.map((p: any) => [p.user_id, p.email]));
-      }
-      setStudents((st.data as any[]).map(s => ({ ...s, email: emailMap[s.user_id] ?? null })) as any);
-    }
+    if (st.data) setStudents(st.data as any);
     if (cl.data) setClasses(cl.data);
   };
 
@@ -162,8 +154,11 @@ const ManageStudents = () => {
       toast({ title: 'Cập nhật sinh viên thành công' });
     } else {
       const email = data.email.trim();
-      const dupEmail = await supabase.from('profiles').select('user_id').eq('email', email).maybeSingle();
-      if (dupEmail.data) {
+      const [dupStudentEmail, dupTeacherEmail] = await Promise.all([
+        supabase.from('students').select('id').eq('email', email).maybeSingle(),
+        supabase.from('teachers').select('id').eq('email', email).maybeSingle(),
+      ]);
+      if (dupStudentEmail.data || dupTeacherEmail.data) {
         toast({ variant: 'destructive', title: 'Lỗi', description: 'Email đã được sử dụng' });
         return;
       }
@@ -186,6 +181,7 @@ const ManageStudents = () => {
           user_id: userId,
           student_code: data.student_code.trim(),
           full_name: data.full_name.trim(),
+          email: data.email.trim(),
           dob: data.dob || null,
           department: data.department.trim() || null,
           phone: data.phone.trim() || null,
@@ -477,7 +473,7 @@ const ManageStudents = () => {
             <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-sm">
               <dt className="text-muted-foreground">Mã SV</dt><dd className="col-span-2 font-mono">{viewing.student_code}</dd>
               <dt className="text-muted-foreground">Họ tên</dt><dd className="col-span-2 font-medium">{viewing.full_name}</dd>
-              <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob || '—'}</dd>
+              <dt className="text-muted-foreground">Ngày sinh</dt><dd className="col-span-2">{viewing.dob ? viewing.dob.split('-').reverse().join('/') : '—'}</dd>
               <dt className="text-muted-foreground">Giới tính</dt><dd className="col-span-2">{viewing.gender === 'M' ? 'Nam' : viewing.gender === 'F' ? 'Nữ' : '—'}</dd>
               <dt className="text-muted-foreground">Chuyên ngành</dt><dd className="col-span-2">{viewing.department || '—'}</dd>
               <dt className="text-muted-foreground">Lớp</dt><dd className="col-span-2">{viewing.classes?.class_name || '—'}</dd>

@@ -20,11 +20,13 @@ import ManageSemesters from "./pages/admin/ManageSemesters";
 
 // Teacher pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import TeacherGrades from "./pages/teacher/TeacherGrades";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentProfile from "./pages/student/StudentProfile";
 import StudentGrades from "./pages/student/StudentGrades";
 
 const queryClient = new QueryClient();
@@ -88,11 +90,13 @@ const App = () => (
 
             {/* Teacher Routes */}
             <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
+            <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
             <Route path="/teacher/classes" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherClasses /></ProtectedRoute>} />
             <Route path="/teacher/grades" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherGrades /></ProtectedRoute>} />
 
             {/* Student Routes */}
             <Route path="/student" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
             <Route path="/student/grades" element={<ProtectedRoute allowedRoles={['student']}><StudentGrades /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />

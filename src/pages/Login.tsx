@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, Mail, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -33,83 +33,82 @@ const Login = () => {
   return (
     <div className="flex min-h-screen flex-col light" data-theme="light">
       {/* Dark navy header */}
-      <header className="relative z-20 flex items-center justify-between bg-[#001d3d] px-6 py-3">
+      <header className="relative z-20 flex items-center bg-[#0a1628] px-6 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur">
-            <GraduationCap size={22} className="text-white" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
+            <GraduationCap size={20} className="text-white" />
           </div>
-          <div>
-            <p className="text-sm font-semibold tracking-wide text-white">{t('app.name')}</p>
-            <p className="text-[11px] text-white/60">{t('app.subtitle')}</p>
-          </div>
+          <p className="text-sm font-semibold tracking-wide text-white uppercase">{t('app.subtitle')}</p>
         </div>
       </header>
 
-      {/* Hero section */}
-      <main className="relative flex flex-1">
-        {/* Background image */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'url(/campus-bg.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 40%',
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#001d3d]/80 via-[#001d3d]/40 to-transparent" />
-
-        {/* Content */}
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-12 px-8">
-          {/* Large serif text overlay */}
-          <div className="hidden max-w-xl flex-1 md:block">
-            <h1
-              className="text-5xl leading-tight font-light tracking-tight text-white lg:text-7xl"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-            >
-              Học tập là
-              <br />
-              <span className="font-normal italic">tương lai</span>
-            </h1>
+      {/* Main content */}
+      <main className="relative flex flex-1 items-start justify-center bg-[#0f2035] pt-28">
+        <div className="flex w-full max-w-7xl gap-0 px-8">
+          {/* Left: hero image area */}
+          <div className="relative hidden flex-[2] overflow-hidden rounded-l-2xl md:block">
+            <img src="/campus-bg.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-[#0a1628]/30 to-transparent" />
+            <div className="relative z-10 flex h-full flex-col justify-end p-8">
+              <h1
+                className="text-4xl leading-tight font-light tracking-tight text-white lg:text-5xl"
+                style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+              >
+                Hệ thống
+                <br />
+                <span className="font-normal italic">Quản lý Sinh viên PTIT</span>
+              </h1>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-white/70">
+                Tra cứu điểm, quản lý môn học và theo dõi tiến trình học tập dễ dàng trên một nền tảng duy nhất.
+              </p>
+            </div>
           </div>
 
-          {/* Login card */}
-          <div className="mx-auto w-full max-w-md md:mx-0">
-            <div className="rounded-2xl border border-white/10 bg-white p-8 shadow-2xl backdrop-blur-sm">
-              <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#001d3d]">
-                  <GraduationCap size={24} className="text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Chào mừng bạn đến với<br />Hệ thống Quản lý Sinh Viên</h2>
-                <p className="mt-3 text-sm text-gray-500">Vui lòng đăng nhập để tiếp tục</p>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
+          {/* Right: login card */}
+          <div className="flex w-full flex-1 flex-col md:mx-0">
+            <div className="rounded-2xl bg-white px-10 py-24 shadow-2xl md:rounded-l-none">
+              <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Chào mừng bạn</h2>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-1.5">
                   <Label required htmlFor="email">{t('login.email')}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t('login.emailPlaceholder')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    maxLength={40}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t('login.emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      maxLength={40}
+                      className="h-11 pl-10"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
+
+                <div className="space-y-1.5">
                   <Label required htmlFor="password">{t('login.password')}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    maxLength={32}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      maxLength={32}
+                      className="h-11 pl-10"
+                    />
+                  </div>
                 </div>
-                <Button type="submit" className="h-11 w-full bg-[#001d3d] text-white hover:bg-[#003566]" disabled={loading}>
+
+                <Button
+                  type="submit"
+                  className="h-11 w-full rounded-full bg-[#0a1628] text-white hover:bg-[#1a3050]"
+                  disabled={loading}
+                >
                   {loading ? t('login.submitting') : t('login.submit')}
                 </Button>
               </form>
@@ -117,10 +116,12 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Bottom copyright */}
-        <p className="absolute bottom-4 left-6 z-10 text-xs text-white/40">
-          © {new Date().getFullYear()} Học viện công nghệ bưu chính viễn thông. All Rights Reserved.
-        </p>
+        {/* Footer */}
+        <div className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-[#091420] px-6 py-3">
+          <p className="text-center text-xs text-white/40">
+            © {new Date().getFullYear()} Học viện Công nghệ Bưu chính Viễn thông. All Rights Reserved.
+          </p>
+        </div>
       </main>
     </div>
   );
