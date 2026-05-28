@@ -72,10 +72,9 @@ const ManageSemesters = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { data: gradeRows } = await supabase.from('grades').select('course_id').eq('semester_id', id);
-    const courseCount = new Set((gradeRows || []).map((g: any) => g.course_id)).size;
-    if (courseCount > 0) {
-      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Học kỳ này đã có ${courseCount} môn học. Vui lòng xóa các bản ghi liên quan trước.` });
+    const { count } = await supabase.from('courses').select('id', { count: 'exact', head: true }).eq('semester_id', id);
+    if ((count ?? 0) > 0) {
+      toast({ variant: 'destructive', title: 'Không thể xóa', description: `Học kỳ này đang có ${count} môn học liên kết. Vui lòng xóa các môn học trước.` });
       return;
     }
     await supabase.from('semesters').delete().eq('id', id);
